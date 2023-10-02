@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/spotter/swprojects/liftometer/liftometer",
-      "program": "/home/spotter/swprojects/liftometer/liftometer/build/Debug/outDebug",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/build/debug/liftometer",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

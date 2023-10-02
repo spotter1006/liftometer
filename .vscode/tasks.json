@@ -10,7 +10,7 @@
 				"-pthread",
 				"-fdiagnostics-color=always",
 				"-g",
-				"${workspaceFolder}/liftometer/*.c*",
+				"${workspaceFolder}/*.c*",
 				"-o",
 				"${fileDirname}/build/debug/liftometer"
 			],
