@@ -39,6 +39,7 @@ void Imu::runForever(){
     u8 mode;
     thread::native_handle_type threadHandles[2];
 
+    // UART setup
     fd = BNO055_uart_init(B115200);
     if(fd > 0){
         cout << "Successfully intialized the UART" << endl;
@@ -70,9 +71,25 @@ void Imu::runForever(){
     tDisplay.detach();
     threadHandles[1] = tDisplay.native_handle();
 
-    cout << "imu.runForver() waiting for SIGINT" << endl;
-    // Wait for SIGINT
-    while(flagKeepRunning.test_and_set()){   
+    // Main loop
+    string line;
+    cout << "Liftometer - 'h' for a list of commands" << endl; 
+    while(flagKeepRunning.test_and_set()){   // Exit on SIGINT
+       
+        getline(cin, line);
+
+        if(line.compare("q") == 0){
+            cout << "Quit command recieved, exiting..." << endl;
+            break;
+        }else if(line.compare("h") == 0){
+            cout << "Liftometer commands:" << endl;
+            cout << "h - diplay this help message" << endl;
+            cout << "r -reset the BNO055 chip>" << endl;
+            cout << "q - quit liftometer" << endl;
+        }else if(line.compare("r") == 0){
+            cout << "Reset command recieved, resetting the BNO055..." << endl;
+            bno055_set_sys_rst(1);
+        }
         this_thread::yield();
     }
 
