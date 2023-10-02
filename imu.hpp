@@ -1,0 +1,45 @@
+#ifndef _imu_h_
+#define _imu_h_
+
+#include "average.hpp"
+#include "bno055.h"
+#include <limits>
+#include <thread>
+#include <mutex>
+using namespace std;
+
+typedef enum imu_component{
+    IMU_COMPONENT_ROLL,     // Roll in degrees
+    IMU_COMPONENT_PITCH,    // Pitch in degrees
+    IMU_COMPONENT_YAW,      // Yaw in degrees
+    IMU_COMPONENT_ACCEL     // Acceleration in m / s^2
+}IMU_COMPONENT;
+
+class Imu{
+    public:
+        Imu(int);
+        ~Imu(void);
+
+        // Thread  functions
+        static int imuPoller(Imu*);
+        static int udateDisplay(Imu*);
+
+        void runForever(void);
+        inline double getAverageAccel(int nSamples){return m_pAccel->calc((m_pAccel->size() > nSamples)? m_pAccel->size() : nSamples);}
+        inline double getAverageRoll(int nSamples){return m_pRoll->calc(nSamples);}
+        inline double getAveragePitch(int nSamples){return m_pPitch->calc(nSamples);}
+        inline double getAverageYaw(int nSamples){return m_pYaw->calc(nSamples);}
+
+        inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
+        inline void unlock(void){m_mtxData.unlock();}
+ 
+    private:
+        static void sigHandler(int signum);
+        int m_nBufferSize;
+        Average* m_pRoll;
+        Average* m_pPitch;
+        Average* m_pYaw;
+        Average* m_pAccel;
+        timed_mutex m_mtxData;
+};
+#endif
