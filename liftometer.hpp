@@ -3,5 +3,4 @@
 #include <pthread.h>
 #include <thread>
 #include <mutex>
-std::timed_mutex mtxData;
 #endif

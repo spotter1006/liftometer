@@ -99,6 +99,8 @@ BNO055_RETURN_FUNCTION_TYPE bno055_init(struct bno055_t *bno055)
     u8 data_u8 = BNO055_INIT_VALUE;
     u8 bno055_page_zero_u8 = BNO055_PAGE_ZERO;
 
+    // com_rslt = bno055_set_sys_rst(1);
+
     /* Array holding the Software revision id
      */
     u8 a_SW_ID_u8[BNO055_REV_ID_SIZE] = { BNO055_INIT_VALUE, BNO055_INIT_VALUE };

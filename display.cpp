@@ -4,6 +4,8 @@
 #include "liftometer.hpp"
 using namespace std;
 
+extern timed_mutex mtxData;
+
 Display::Display(){
 
 }

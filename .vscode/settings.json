@@ -61,6 +61,7 @@
     "thread": "cpp",
     "new": "cpp",
     "mutex": "cpp",
-    "shared_mutex": "cpp"
+    "shared_mutex": "cpp",
+    "cmath": "cpp"
   }
 }

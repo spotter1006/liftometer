@@ -70,8 +70,8 @@ int BNO055_uart_init(int speed){
     tty.c_lflag = 0;                // no signaling chars, no echo,
                                     // no canonical processing
     tty.c_oflag = 0;                // no remapping, no delays
-    tty.c_cc[VMIN]  = 5;            // read blocks
-    tty.c_cc[VTIME] = 2;            // 0.1 seconds read timeout
+    tty.c_cc[VMIN]  = 10;            // read blocks
+    tty.c_cc[VTIME] = 2;            //  se1conds read timeout
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
     tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls,
                                     // enable readingB
@@ -128,7 +128,7 @@ s8 BNO055_uart_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
 
 s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     int nResult;
-    int nRet;
+    int nRetries = 1;
 
     txBuff[0] = COMMAND_START_BYTE;
     txBuff[1] = 0;          // write operation
@@ -137,37 +137,34 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     for(int i=0; i < cnt; i++){
         txBuff[i +4] = reg_data[i];
     }
-    nResult = write(dev_addr, txBuff, cnt + 4);
-    if(nResult > 0){
-        nResult = read(dev_addr, rxBuff, 2);        //Get the response
-        if(nResult ==2){
-            if(rxBuff[0] == 0xEE){
-                if(rxBuff[1] != 1){
-                    nStatus = rxBuff[1];
-                    printf("BNO055_uart_bus_write: 0x%x: %s error received\n", nStatus, ackMessages[nStatus]);
-                    nRet =-1;
-                }else{
-                    nStatus = 0;
-                    nRet =0;
-                }
-            }else{
-                printf("BNO055_uart_bus_write: Invalid start byte in command response: 0x%02hhX\n", rxBuff[0]);
-                nRet = -1;
-            }        
-        }else{
-            printf("BNO055_uart_bus_write error 0x%hhu reading 2 bytes from the UART\n", errno); 
-        }
+    do{
+        nResult = write(dev_addr, txBuff, cnt + 4);
+        if(nResult > 0){
+        nResult = read(dev_addr, rxBuff, 2);        // Get the response
+            if(nResult ==2){
+                if(rxBuff[0] == 0xEE){
+                    if(rxBuff[0] == 7){     // Buffer overrun
+                        nRetries--;         // retry per Bosch "Uart Interface" document
+                    }
+                    else if(rxBuff[1] != 1){
+                        nStatus = rxBuff[1];
+                        printf("BNO055_uart_bus_write: 0x%x: %s error received\n", nStatus, ackMessages[nStatus]);
+                        nRetries = -1;      // Dont retry on any other codes
+                    }else{                  // Success
+                        nStatus = 0;
+                        nRetries = 0;
+                    }
+                }else
+                    printf("BNO055_uart_bus_write: Invalid start byte in command response: 0x%02hhX\n", rxBuff[0]);                
+            }else
+                printf("BNO055_uart_bus_write error 0x%hhu reading 2 bytes from the UART\n", errno); 
+        }else
+            printf("BNO055_uart_bus_write error 0x%hhu writing %hhu, bytes to the UART\n", errno, cnt + 4);
+    } while(nRetries > 0);
 
-    }else{
-        printf("BNO055_uart_bus_write error 0x%hhu writing %hhu, bytes to the UART\n", errno, cnt + 4);
-        nRet = -1;
-    }
-
-    return nRet;
+    return nRetries > 0;
 }
 
-
-
 void BNO055_delay_msek(u32 msek){ 
-    sleep(msek);
+    usleep(msek * 1000);
 }
