@@ -33,7 +33,6 @@ void Imu::sigHandler(int signum){
     flagKeepRunning.clear();
 }
 void Imu::runForever(){
-    // Switching to UART because of clock stretching problem. Using serial port file descriptor as device address
     int fd;
     s8 stat;
     u8 mode;
@@ -57,9 +56,7 @@ void Imu::runForever(){
     if(stat == 0){
         cout << "Successfully intialized the BNO055" << endl;
     }else{
-        cout << "Error initializing BNO05. Exiting Imu.runForever()" << endl;
-        close(fd);
-        return;
+        cout << "Error initializing BNO05. " << endl;
     }
 
     // Start the IMU and display threads 
@@ -75,20 +72,29 @@ void Imu::runForever(){
     string line;
     cout << "Liftometer - 'h' for a list of commands" << endl; 
     while(flagKeepRunning.test_and_set()){   // Exit on SIGINT
-       
         getline(cin, line);
-
         if(line.compare("q") == 0){
             cout << "Quit command recieved, exiting..." << endl;
             break;
         }else if(line.compare("h") == 0){
             cout << "Liftometer commands:" << endl;
             cout << "h - diplay this help message" << endl;
-            cout << "r -reset the BNO055 chip>" << endl;
+            cout << "r -reset the BNO055" << endl;
+            cout << "m[mode] - read or set the operating mode of the BNO0055" << endl;
             cout << "q - quit liftometer" << endl;
         }else if(line.compare("r") == 0){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
             bno055_set_sys_rst(1);
+        }else if(line.find("m") == 0){
+            u8 nMode;
+            if(line.size() == 1){
+                bno055_get_operation_mode(&nMode);
+                cout << "BNO055 operation mode: " << +nMode << endl;
+            }else{                int mod = stoi(line.substr(1));
+                nMode = static_cast<u8>(mod) ;
+                cout << "Changing mode to " << mod << endl;
+                bno055_set_operation_mode(nMode);
+            }
         }
         this_thread::yield();
     }
@@ -116,6 +122,9 @@ int Imu::imuPoller(Imu* pImu){
     //     return -1;
 
     // }
+    u8 currentMode;
+    result = bno055_get_operation_mode(&currentMode);
+    cout << "The current operation mode is " << static_cast<int> (currentMode) << endl;
     result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     if(result == 0){
         cout << "Successfully set operation mode to NDOF" << endl;
