@@ -8,12 +8,6 @@
 #include <mutex>
 using namespace std;
 
-typedef enum imu_component{
-    IMU_COMPONENT_ROLL,     // Roll in degrees
-    IMU_COMPONENT_PITCH,    // Pitch in degrees
-    IMU_COMPONENT_YAW,      // Yaw in degrees
-    IMU_COMPONENT_ACCEL     // Acceleration in m / s^2
-}IMU_COMPONENT;
 
 class Imu{
     public:
@@ -22,7 +16,7 @@ class Imu{
 
         // Thread  functions
         static int imuPoller(Imu*);
-        static int udateDisplay(Imu*);
+        static int updateDisplay(Imu*);
 
         void runForever(void);
         inline double getAverageAccel(int nSamples){return m_pAccel->calc((m_pAccel->size() > nSamples)? m_pAccel->size() : nSamples);}

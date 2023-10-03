@@ -64,7 +64,7 @@ void Imu::runForever(){
     thread tImu(imuPoller, this);  
     tImu.detach();
     threadHandles[0] = tImu.native_handle();      
-    thread tDisplay(udateDisplay, this);
+    thread tDisplay(updateDisplay, this);
     tDisplay.detach();
     threadHandles[1] = tDisplay.native_handle();
 
@@ -165,7 +165,7 @@ int Imu::imuPoller(Imu* pImu){
     }
      return 0;
 }
-int Imu::udateDisplay(Imu* pImu){
+int Imu::updateDisplay(Imu* pImu){
     int result = 0;
 
     chrono::steady_clock::time_point timePt;
