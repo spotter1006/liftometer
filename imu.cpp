@@ -4,16 +4,12 @@
 #include <math.h>
 #include <termios.h>
 #include <iostream>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
 #include "bno055_support.h"
-
 using namespace std;
 
 extern "C" struct bno055_t bno055;
 
-atomic_flag flagKeepRunning;
+thread::native_handle_type threadHandles[2];
 
 Imu::Imu(int nBufferSize){
     m_nBufferSize =nBufferSize;
@@ -21,7 +17,7 @@ Imu::Imu(int nBufferSize){
     m_pPitch = new Average(m_nBufferSize);
     m_pYaw = new Average(m_nBufferSize);
     m_pAccel = new Average(m_nBufferSize);
-    signal(SIGINT, sigHandler);
+
 }
 Imu::~Imu(){
     delete m_pRoll;
@@ -29,22 +25,18 @@ Imu::~Imu(){
     delete m_pYaw;
     delete m_pAccel;
 }
-void Imu::sigHandler(int signum){
-    flagKeepRunning.clear();
-}
-void Imu::runForever(){
-    int fd;
-    s8 stat;
-    u8 mode;
-    thread::native_handle_type threadHandles[2];
 
-    // UART setup
+int Imu::init(){
+    extern int fd;
+    
+    s8 stat;
+    int nRet;
     fd = BNO055_uart_init(B115200);
     if(fd > 0){
         cout << "Successfully intialized the UART" << endl;
     }else{
         cout << "Error: " << errno << "Initializing UART. Exiting Imu.runForever()" << endl;
-        return;
+        return -1;
     }
 
     bno055.dev_addr = fd;   
@@ -60,52 +52,13 @@ void Imu::runForever(){
     }
 
     // Start the IMU and display threads 
-    flagKeepRunning.test_and_set();
     thread tImu(imuPoller, this);  
     tImu.detach();
     threadHandles[0] = tImu.native_handle();      
     thread tDisplay(updateDisplay, this);
     tDisplay.detach();
     threadHandles[1] = tDisplay.native_handle();
-
-    // Main loop
-    string line;
-    cout << "Liftometer - 'h' for a list of commands" << endl; 
-    while(flagKeepRunning.test_and_set()){   // Exit on SIGINT
-        getline(cin, line);
-        if(line.compare("q") == 0){
-            cout << "Quit command recieved, exiting..." << endl;
-            break;
-        }else if(line.compare("h") == 0){
-            cout << "Liftometer commands:" << endl;
-            cout << "h - diplay this help message" << endl;
-            cout << "r -reset the BNO055" << endl;
-            cout << "m[mode] - read or set the operating mode of the BNO0055" << endl;
-            cout << "q - quit liftometer" << endl;
-        }else if(line.compare("r") == 0){
-            cout << "Reset command recieved, resetting the BNO055..." << endl;
-            bno055_set_sys_rst(1);
-        }else if(line.find("m") == 0){
-            u8 nMode;
-            if(line.size() == 1){
-                bno055_get_operation_mode(&nMode);
-                cout << "BNO055 operation mode: " << +nMode << endl;
-            }else{                int mod = stoi(line.substr(1));
-                nMode = static_cast<u8>(mod) ;
-                cout << "Changing mode to " << mod << endl;
-                bno055_set_operation_mode(nMode);
-            }
-        }
-        this_thread::yield();
-    }
-
-    // Clean up and exit
-    cout << endl << "Killing  threads..." << endl;
-    pthread_cancel(threadHandles[0]);
-    pthread_cancel(threadHandles[1]);
-
-exitPoint:
-    close(fd);
+    return nRet;
 }
 
 int Imu::imuPoller(Imu* pImu){
@@ -163,7 +116,7 @@ int Imu::imuPoller(Imu* pImu){
         
         this_thread::sleep_until(timePt);
     }
-     return 0;
+    return 0;
 }
 int Imu::updateDisplay(Imu* pImu){
     int result = 0;
@@ -181,4 +134,3 @@ int Imu::updateDisplay(Imu* pImu){
     }
     return result;
 }
-

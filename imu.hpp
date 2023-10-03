@@ -17,8 +17,8 @@ class Imu{
         // Thread  functions
         static int imuPoller(Imu*);
         static int updateDisplay(Imu*);
+        int init();
 
-        void runForever(void);
         inline double getAverageAccel(int nSamples){return m_pAccel->calc((m_pAccel->size() > nSamples)? m_pAccel->size() : nSamples);}
         inline double getAverageRoll(int nSamples){return m_pRoll->calc(nSamples);}
         inline double getAveragePitch(int nSamples){return m_pPitch->calc(nSamples);}
@@ -28,7 +28,7 @@ class Imu{
         inline void unlock(void){m_mtxData.unlock();}
  
     private:
-        static void sigHandler(int signum);
+        
         int m_nBufferSize;
         Average* m_pRoll;
         Average* m_pPitch;
