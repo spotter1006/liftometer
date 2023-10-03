@@ -6,7 +6,7 @@
 #include <iostream>
 #include "bno055_support.h"
 using namespace std;
-
+#include "liftometer.hpp"
 extern "C" struct bno055_t bno055;
 
 Imu::Imu(int nBufferSize){
@@ -88,10 +88,10 @@ int Imu::imuPoller(Imu* pImu){
         chrono::_V2::steady_clock::time_point timePt = 
             chrono::steady_clock::now() + chrono::milliseconds(1000);    // 2 Hz    
         
-        pImu->m_mtxData.try_lock_until(timePt);
+        mtxData.lock();
         ret1 = bno055_read_euler_hrp(&hrp);  
         ret2 = bno055_read_linear_accel_xyz(&accel);  
-        pImu->unlock();  
+        mtxData.unlock(); 
 
         if(ret1 == BNO055_SUCCESS){
             pImu->m_pRoll->add(hrp.r);
