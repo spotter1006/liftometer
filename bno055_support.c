@@ -49,6 +49,10 @@ const char* responseMessages[11] = {
 int BNO055_uart_init(int speed){
     char* port_name = PORT_NAME;
     int fd = open(port_name, O_RDWR | O_NOCTTY | O_SYNC);
+    
+    usleep(100000);         // Junk building up in the buffer. 100 ms delay
+    tcflush(fd,TCIOFLUSH);  // Start with n empty serial port buffer
+    
     struct termios tty;
     if (tcgetattr (fd, &tty) != 0)
     {
@@ -110,7 +114,7 @@ s8 BNO055_uart_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
                 printf("BNO055_uart_bus_read: 0x%x: %s received\n", nStatus, responseMessages[nStatus]);
                 nRet = -1;
             }else{
-                printf("BNO055_uart_bus_read: Invalid start byte in response: 0x%X\n");
+                printf("BNO055_uart_bus_read: Invalid start byte in response: 0x%02hhX\n");
                 nRet = -1;
             }          
         }else{
@@ -147,7 +151,7 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
                     nRet =0;
                 }
             }else{
-                printf("BNO055_uart_bus_write: Invalid start byte in command response: 0x%x\n", rxBuff[0]);
+                printf("BNO055_uart_bus_write: Invalid start byte in command response: 0x%02hhX\n", rxBuff[0]);
                 nRet = -1;
             }        
         }else{
