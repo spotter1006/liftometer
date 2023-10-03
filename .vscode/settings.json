@@ -59,6 +59,8 @@
     "iostream": "cpp",
     "random": "cpp",
     "thread": "cpp",
-    "new": "cpp"
+    "new": "cpp",
+    "mutex": "cpp",
+    "shared_mutex": "cpp"
   }
 }

@@ -2,11 +2,11 @@
 #include "imu.hpp"
 #include <signal.h>
 #include <unistd.h>
+#include "display.hpp"
 #define BUFFER_SIZE 1024
 using namespace std;
 
 atomic_flag flagKeepRunning;
-extern thread::native_handle_type threadHandles[2];
 void sigHandler(int signum){
     flagKeepRunning.clear();
 }
@@ -18,9 +18,12 @@ int main(){
     
     flagKeepRunning.test_and_set();
     signal(SIGINT, sigHandler);
+
     Imu* imu = new Imu(BUFFER_SIZE);
     imu->init();
-  
+    Display* display = new Display();
+    display->start();
+
     // Main loop
     string line;
     cout << "Liftometer - 'h' for a list of commands" << endl; 
@@ -53,10 +56,8 @@ int main(){
     }
     // Clean up and exit
     cout << endl << "Killing  threads..." << endl;
-    pthread_cancel(threadHandles[0]);
-    pthread_cancel(threadHandles[1]);
+    delete display;
     delete imu;
     close(fd);
-    cout << "Exiting" << endl;
     return result;
 }

@@ -16,7 +16,6 @@ class Imu{
 
         // Thread  functions
         static int imuPoller(Imu*);
-        static int updateDisplay(Imu*);
         int init();
 
         inline double getAverageAccel(int nSamples){return m_pAccel->calc((m_pAccel->size() > nSamples)? m_pAccel->size() : nSamples);}
@@ -35,5 +34,6 @@ class Imu{
         Average* m_pYaw;
         Average* m_pAccel;
         timed_mutex m_mtxData;
+        std::thread m_tPoller;
 };
 #endif

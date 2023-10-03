@@ -9,8 +9,6 @@ using namespace std;
 
 extern "C" struct bno055_t bno055;
 
-thread::native_handle_type threadHandles[2];
-
 Imu::Imu(int nBufferSize){
     m_nBufferSize =nBufferSize;
     m_pRoll = new Average(m_nBufferSize);
@@ -20,6 +18,7 @@ Imu::Imu(int nBufferSize){
 
 }
 Imu::~Imu(){
+    pthread_cancel(m_tPoller.native_handle());
     delete m_pRoll;
     delete m_pPitch;
     delete m_pYaw;
@@ -51,13 +50,9 @@ int Imu::init(){
         cout << "Error initializing BNO05. " << endl;
     }
 
-    // Start the IMU and display threads 
-    thread tImu(imuPoller, this);  
-    tImu.detach();
-    threadHandles[0] = tImu.native_handle();      
-    thread tDisplay(updateDisplay, this);
-    tDisplay.detach();
-    threadHandles[1] = tDisplay.native_handle();
+    thread m_tPoller(imuPoller, this);  
+    m_tPoller.detach();
+  
     return nRet;
 }
 
@@ -106,31 +101,14 @@ int Imu::imuPoller(Imu* pImu){
         }else
             cout << "error reading hrp" << endl;
         
-        // if(ret2 == BNO055_SUCCESS){
-        //     // Multiplies of shorts to int. Cast to double for the sqrt function
-        //     cout << "accel: " << accel.x << ","<< accel.y << ","<< accel.y << endl;
-        //     double dAccel = sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
-        //     pImu->m_pAccel->add(dAccel);
-        // }else
-        //     cout << "error reading linear accel" << endl;
+        if(ret2 == BNO055_SUCCESS){
+            cout << "accel: " << accel.x << ","<< accel.y << ","<< accel.y << endl;
+            double dAccel = sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
+            pImu->m_pAccel->add(dAccel);
+        }else
+            cout << "error reading linear accel" << endl;
         
         this_thread::sleep_until(timePt);
     }
     return 0;
-}
-int Imu::updateDisplay(Imu* pImu){
-    int result = 0;
-
-    chrono::steady_clock::time_point timePt;
-    cout << "update display thread started" << endl;
-    while(1){
-
-        timePt = chrono::steady_clock::now() + chrono::milliseconds(500);    // 2 Hz
-        pImu->lock(timePt);
-        // Access data here
-        pImu->unlock();
-        // Update display here
-        this_thread::sleep_until(timePt);
-    }
-    return result;
 }
