@@ -20,6 +20,7 @@ s8 BNO055_uart_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
 s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
 void BNO055_delay_msek(u32 msek);
 int BNO055_getResponse(u8 dev_addr);
+int BNO055_read_combined_data(bno055_euler_t* hrp, bno055_linear_accel_t* accel );
 
 #endif
 #ifdef __cplusplus

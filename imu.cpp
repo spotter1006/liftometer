@@ -80,31 +80,35 @@ int Imu::imuPoller(Imu* pImu){
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(1000);    // 2 Hz    
+            chrono::steady_clock::now() + chrono::milliseconds(500);      
         
         mtxData.lock();
-        if(nPingPong){
-            ret = bno055_read_euler_hrp(&hrp); 
-            if(ret == BNO055_SUCCESS){
-                pImu->m_pRoll->add(hrp.r);
-                pImu->m_pPitch->add(hrp.p);
-                pImu->m_pYaw->add(hrp.h);      // Heading, 'h', is equivelant to yaw
-                cout << "hrp: " << hrp.h << "," << hrp.r << ","<< hrp.p << endl;
-            }
-        }
-        else{  
-            ret = bno055_read_linear_accel_xyz(&accel); 
-            if(ret == BNO055_SUCCESS){
-                cout << "accel: " << accel.x << ","<< accel.y << ","<< accel.y << endl;
-                double dAccel = sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
-                pImu->m_pAccel->add(dAccel);
-            }
-        }
+        result = BNO055_read_combined_data(&hrp, &accel);
+        mtxData.unlock();
         
-        nPingPong = ~nPingPong;
-        mtxData.unlock(); 
+        if(result ==0){
+            pImu->m_pRoll->add(hrp.r);
+            pImu->m_pPitch->add(hrp.p);
+            pImu->m_pYaw->add(hrp.h);      
+            double dAccel = sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
+            pImu->m_pAccel->add(dAccel);
+        }
+ 
         
         this_thread::sleep_until(timePt);
     }
     return 0;
 }
+double Imu::getAverageAccel(int nSamples){
+    return m_pAccel->calc( nSamples);
+}
+double Imu::getAverageRoll(int nSamples){
+    return m_pRoll->calc(nSamples);
+}
+double Imu::getAveragePitch(int nSamples){
+    return m_pPitch->calc(nSamples);
+}
+double Imu::getAverageYaw(int nSamples){
+    return m_pYaw->calc(nSamples);
+}
+d

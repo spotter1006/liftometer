@@ -14,7 +14,7 @@ int fd;     // Handle to serial port
 #define I2C0           5
 
 u8 txBuff[16];
-u8 rxBuff[16];
+u8 rxBuff[32];
 
 // u8 len;
 s8 nStatus;
@@ -111,10 +111,10 @@ s8 BNO055_uart_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
                 nRet = 0;
             }else if(rxBuff[0] == 0xEE){
                 nStatus = rxBuff[1];
-                printf("BNO055_uart_bus_read: 0x%x: %s received\n", nStatus, responseMessages[nStatus]);
+                printf("BNO055_uart_bus_read: 0x%x: %s\n", nStatus, responseMessages[nStatus]);
                 nRet = -1;
             }else{
-                printf("BNO055_uart_bus_read: Invalid start byte in response: 0x%02hhX\n");
+                printf("BNO055_uart_bus_read: Invalid response start byte: 0x%02hhX\n");
                 nRet = -1;
             }          
         }else{
@@ -165,6 +165,30 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     return nRetries > 0;
 }
 
+int BNO055_read_combined_data(bno055_euler_t* hrp, bno055_linear_accel_t* accel ){
+    txBuff[0] = COMMAND_START_BYTE;  
+    txBuff[1] = 0x01,   // Read operation
+    txBuff[2] = BNO055_EULER_H_LSB_ADDR;   
+    txBuff[3] = 20;     // Read 20 bytes (hrp, quaternion,linear acceleration)
+
+    if(write(fd, txBuff, 4) != 4) 
+        return -1;
+    if(read(fd, rxBuff, 22) != 22) 
+        return -2;
+    if(rxBuff[0] != RESPONSE_START_BYTE) 
+        return -3;
+    if(rxBuff[1] != 20) 
+        return -4;
+
+    hrp->h = rxBuff[2] | (rxBuff[3] << 8);
+    hrp->r = rxBuff[4] | (rxBuff[5] << 8);
+    hrp->p = rxBuff[6] | (rxBuff[7] << 8);
+    //...quaternion data
+    accel->x = rxBuff[16] | (rxBuff[17] << 8);
+    accel->y = rxBuff[18] | (rxBuff[19] << 8);
+    accel->z = rxBuff[20] | (rxBuff[21] << 8);
+    return 0;
+}
 void BNO055_delay_msek(u32 msek){ 
     usleep(msek * 1000);
 }

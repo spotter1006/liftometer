@@ -17,12 +17,10 @@ class Imu{
         // Thread  functions
         static int imuPoller(Imu*);
         int init();
-
-        inline double getAverageAccel(int nSamples){return m_pAccel->calc((m_pAccel->size() > nSamples)? m_pAccel->size() : nSamples);}
-        inline double getAverageRoll(int nSamples){return m_pRoll->calc(nSamples);}
-        inline double getAveragePitch(int nSamples){return m_pPitch->calc(nSamples);}
-        inline double getAverageYaw(int nSamples){return m_pYaw->calc(nSamples);}
-
+        double getAverageAccel(int nSamples);
+        double getAverageRoll(int nSamples);
+        double getAveragePitch(int nSamples);
+        double getAverageYaw(int nSamples);
         inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
         inline void unlock(void){m_mtxData.unlock();}
  

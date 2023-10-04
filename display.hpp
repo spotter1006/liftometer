@@ -8,9 +8,11 @@ class Display{
         Display();
         ~Display();
         int start();
+        void setSampleSize(int nSampleSize);
     private:
         static int updater(Display* pDisplay);
         std::thread m_tUpdater;
+        int m_nSampleSize;
 };
 
 #endif
