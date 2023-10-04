@@ -99,16 +99,14 @@ BNO055_RETURN_FUNCTION_TYPE bno055_init(struct bno055_t *bno055)
     u8 data_u8 = BNO055_INIT_VALUE;
     u8 bno055_page_zero_u8 = BNO055_PAGE_ZERO;
 
+    // com_rslt = bno055_set_sys_rst(1);
+
     /* Array holding the Software revision id
      */
     u8 a_SW_ID_u8[BNO055_REV_ID_SIZE] = { BNO055_INIT_VALUE, BNO055_INIT_VALUE };
 
     /* stuct parameters are assign to bno055*/
     p_bno055 = bno055;
-
-    /* TODO: Ensure the chip is in config mode */
-    // com_rslt = bno055_set_operation_mode(BNO055_OPERATION_MODE_CONFIG);
-    // com_rslt = bno055_set_sys_rst(1);
 
     /* Write the default page as zero*/
     com_rslt = p_bno055->BNO055_BUS_WRITE_FUNC(p_bno055->dev_addr,
@@ -118,11 +116,11 @@ BNO055_RETURN_FUNCTION_TYPE bno055_init(struct bno055_t *bno055)
 
     /* Read the chip id of the sensor from page
      * zero 0x00 register*/
-    com_rslt += p_bno055->BNO055_BUS_READ_FUNC(p_bno055->dev_addr,
-                                               BNO055_CHIP_ID_REG,
-                                               &data_u8,
-                                               BNO055_GEN_READ_WRITE_LENGTH);
-    p_bno055->chip_id = data_u8;
+    // com_rslt += p_bno055->BNO055_BUS_READ_FUNC(p_bno055->dev_addr,
+    //                                            BNO055_CHIP_ID_REG,
+    //                                            &data_u8,
+    //                                            BNO055_GEN_READ_WRITE_LENGTH);
+    // p_bno055->chip_id = data_u8;
 
     // // /* Read the accel revision id from page
     // //  * zero 0x01 register*/

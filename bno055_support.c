@@ -14,7 +14,7 @@ int fd;     // Handle to serial port
 #define I2C0           5
 
 u8 txBuff[16];
-u8 rxBuff[16];
+u8 rxBuff[32];
 
 // u8 len;
 s8 nStatus;
@@ -70,8 +70,8 @@ int BNO055_uart_init(int speed){
     tty.c_lflag = 0;                // no signaling chars, no echo,
                                     // no canonical processing
     tty.c_oflag = 0;                // no remapping, no delays
-    tty.c_cc[VMIN]  = 5;            // read blocks
-    tty.c_cc[VTIME] = 2;            // 0.1 seconds read timeout
+    tty.c_cc[VMIN]  = 10;            // read blocks
+    tty.c_cc[VTIME] = 2;            //  se1conds read timeout
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
     tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls,
                                     // enable readingB
@@ -111,10 +111,10 @@ s8 BNO055_uart_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
                 nRet = 0;
             }else if(rxBuff[0] == 0xEE){
                 nStatus = rxBuff[1];
-                printf("BNO055_uart_bus_read: 0x%x: %s received\n", nStatus, responseMessages[nStatus]);
+                printf("BNO055_uart_bus_read: 0x%x: %s\n", nStatus, responseMessages[nStatus]);
                 nRet = -1;
             }else{
-                printf("BNO055_uart_bus_read: Invalid start byte in response: 0x%02hhX\n");
+                printf("BNO055_uart_bus_read: Invalid response start byte: 0x%02hhX\n");
                 nRet = -1;
             }          
         }else{
@@ -128,7 +128,7 @@ s8 BNO055_uart_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
 
 s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     int nResult;
-    int nRet;
+    int nRetries = 1;
 
     txBuff[0] = COMMAND_START_BYTE;
     txBuff[1] = 0;          // write operation
@@ -137,37 +137,63 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     for(int i=0; i < cnt; i++){
         txBuff[i +4] = reg_data[i];
     }
-    nResult = write(dev_addr, txBuff, cnt + 4);
-    if(nResult > 0){
-        nResult = read(dev_addr, rxBuff, 2);        //Get the response
-        if(nResult ==2){
-            if(rxBuff[0] == 0xEE){
-                if(rxBuff[1] != 1){
-                    nStatus = rxBuff[1];
-                    printf("BNO055_uart_bus_write: 0x%x: %s error received\n", nStatus, ackMessages[nStatus]);
-                    nRet =-1;
-                }else{
-                    nStatus = 0;
-                    nRet =0;
-                }
-            }else{
-                printf("BNO055_uart_bus_write: Invalid start byte in command response: 0x%02hhX\n", rxBuff[0]);
-                nRet = -1;
-            }        
-        }else{
-            printf("BNO055_uart_bus_write error 0x%hhu reading 2 bytes from the UART\n", errno); 
-        }
+    do{
+        nResult = write(dev_addr, txBuff, cnt + 4);
+        if(nResult > 0){
+        nResult = read(dev_addr, rxBuff, 2);        // Get the response
+            if(nResult ==2){
+                if(rxBuff[0] == 0xEE){
+                    if(rxBuff[0] == 7){     // Buffer overrun
+                        nRetries--;         // retry per Bosch "Uart Interface" document
+                    }
+                    else if(rxBuff[1] != 1){
+                        nStatus = rxBuff[1];
+                        printf("BNO055_uart_bus_write: 0x%x: %s error received\n", nStatus, ackMessages[nStatus]);
+                        nRetries = -1;      // Dont retry on any other codes
+                    }else{                  // Success
+                        nStatus = 0;
+                        nRetries = 0;
+                    }
+                }else
+                    printf("BNO055_uart_bus_write: Invalid start byte in command response: 0x%02hhX\n", rxBuff[0]);                
+            }else
+                printf("BNO055_uart_bus_write error 0x%hhu reading 2 bytes from the UART\n", errno); 
+        }else
+            printf("BNO055_uart_bus_write error 0x%hhu writing %hhu, bytes to the UART\n", errno, cnt + 4);
+    } while(nRetries > 0);
 
-    }else{
-        printf("BNO055_uart_bus_write error 0x%hhu writing %hhu, bytes to the UART\n", errno, cnt + 4);
-        nRet = -1;
-    }
-
-    return nRet;
+    return nRetries > 0;
 }
 
+int BNO055_read_combined_data(bno055_euler_t* hrp, bno055_linear_accel_t* accel ){
+    int nRead = 0;
+    int nWritten = 0;
 
+    txBuff[0] = COMMAND_START_BYTE;  
+    txBuff[1] = 0x01,   // Read operation
+    txBuff[2] = BNO055_GYRO_DATA_X_LSB_ADDR;   
+    txBuff[3] = 26;     // Read 26 bytes (hrp, euler, quaternion, linear acceleration)
 
+    if(nWritten = write(fd, txBuff, 4) != 4) 
+        return -1;
+    if(nRead = read(fd, rxBuff, 28) != 28)  // Data plus 2 byte header
+        return -2;
+    if(rxBuff[0] != RESPONSE_START_BYTE) 
+        return -3;
+    if(rxBuff[1] != 26) 
+        return -4;
+
+    // Buffer starts at gyro data which is yaw rate in fusion mode
+    hrp->h = rxBuff[2] | (rxBuff[3] << 8);default
+    hrp->r = rxBuff[4] | (rxBuff[5] << 8);
+    hrp->p = rxBuff[6] | (rxBuff[7] << 8);
+    // ... euler data (6)
+    // ... quaternion data (8)
+    accel->x = rxBuff[22] | (rxBuff[23] << 8);
+    accel->y = rxBuff[24] | (rxBuff[25] << 8);
+    accel->z = rxBuff[26] | (rxBuff[27] << 8);
+    return 0;
+}
 void BNO055_delay_msek(u32 msek){ 
-    sleep(msek);
+    usleep(msek * 1000);
 }

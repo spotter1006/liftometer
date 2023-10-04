@@ -58,6 +58,12 @@
   "files.associations": {
     "iostream": "cpp",
     "random": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "new": "cpp",
+    "mutex": "cpp",
+    "shared_mutex": "cpp",
+    "cmath": "cpp",
+    "*.tcc": "c",
+    "bno055_support.h": "c"
   }
 }
