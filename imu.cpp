@@ -65,8 +65,8 @@ int Imu::imuPoller(Imu* pImu){
     cout << "IMU poller thread started" << endl;
     
     u8 currentMode;
-    result = bno055_get_operation_mode(&currentMode);
-    cout << "The current operation mode is " << static_cast<int> (currentMode) << endl;
+    // result = bno055_get_operation_mode(&currentMode);
+    // cout << "The current operation mode is " << static_cast<int> (currentMode) << endl;
     result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     if(result == 0){
         cout << "Successfully set operation mode to NDOF" << endl;

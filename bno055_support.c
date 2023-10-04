@@ -166,27 +166,32 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
 }
 
 int BNO055_read_combined_data(bno055_euler_t* hrp, bno055_linear_accel_t* accel ){
+    int nRead = 0;
+    int nWritten = 0;
+
     txBuff[0] = COMMAND_START_BYTE;  
     txBuff[1] = 0x01,   // Read operation
-    txBuff[2] = BNO055_EULER_H_LSB_ADDR;   
-    txBuff[3] = 20;     // Read 20 bytes (hrp, quaternion,linear acceleration)
+    txBuff[2] = BNO055_GYRO_DATA_X_LSB_ADDR;   
+    txBuff[3] = 26;     // Read 26 bytes (hrp, euler, quaternion, linear acceleration)
 
-    if(write(fd, txBuff, 4) != 4) 
+    if(nWritten = write(fd, txBuff, 4) != 4) 
         return -1;
-    if(read(fd, rxBuff, 22) != 22) 
+    if(nRead = read(fd, rxBuff, 28) != 28)  // Data plus 2 byte header
         return -2;
     if(rxBuff[0] != RESPONSE_START_BYTE) 
         return -3;
-    if(rxBuff[1] != 20) 
+    if(rxBuff[1] != 26) 
         return -4;
 
-    hrp->h = rxBuff[2] | (rxBuff[3] << 8);
+    // Buffer starts at gyro data which is yaw rate in fusion mode
+    hrp->h = rxBuff[2] | (rxBuff[3] << 8);default
     hrp->r = rxBuff[4] | (rxBuff[5] << 8);
     hrp->p = rxBuff[6] | (rxBuff[7] << 8);
-    //...quaternion data
-    accel->x = rxBuff[16] | (rxBuff[17] << 8);
-    accel->y = rxBuff[18] | (rxBuff[19] << 8);
-    accel->z = rxBuff[20] | (rxBuff[21] << 8);
+    // ... euler data (6)
+    // ... quaternion data (8)
+    accel->x = rxBuff[22] | (rxBuff[23] << 8);
+    accel->y = rxBuff[24] | (rxBuff[25] << 8);
+    accel->z = rxBuff[26] | (rxBuff[27] << 8);
     return 0;
 }
 void BNO055_delay_msek(u32 msek){ 
