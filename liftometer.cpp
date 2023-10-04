@@ -21,7 +21,7 @@ int main(){
     signal(SIGINT, sigHandler);
 
     Imu* imu = new Imu(BUFFER_SIZE);
-    imu->init();
+    imu->start();
     Display* display = new Display();
     display->start();
 

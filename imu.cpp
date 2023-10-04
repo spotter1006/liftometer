@@ -25,7 +25,7 @@ Imu::~Imu(){
     delete m_pAccel;
 }
 
-int Imu::init(){
+int Imu::start(){
     extern int fd;
     s8 stat;
     int nRet;
@@ -80,7 +80,7 @@ int Imu::imuPoller(Imu* pImu){
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(500);      
+            chrono::steady_clock::now() + chrono::milliseconds(100);      
         
         mtxData.lock();
         result = BNO055_read_combined_data(&hrp, &accel);
@@ -90,11 +90,10 @@ int Imu::imuPoller(Imu* pImu){
             pImu->m_pRoll->add(hrp.r);
             pImu->m_pPitch->add(hrp.p);
             pImu->m_pYaw->add(hrp.h);      
-            double dAccel = sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
+            double dAccel = sqrt(accel.x * accel.x + accel.y * accel.y); // Just the horizontal plane
             pImu->m_pAccel->add(dAccel);
         }
  
-        
         this_thread::sleep_until(timePt);
     }
     return 0;
@@ -111,4 +110,3 @@ double Imu::getAveragePitch(int nSamples){
 double Imu::getAverageYaw(int nSamples){
     return m_pYaw->calc(nSamples);
 }
-d
