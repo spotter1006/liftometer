@@ -48,10 +48,10 @@ int main(){
             display->setSampleSize(nSamples);
             cout << "Set the number of sample to average over to " << nSamples << endl;
         }else if(line.compare("d") == 0){
-            cout << "Acceleration: " << pImu->getAverageAccel(nSamples) << endl;
-            cout << "Heading: " << pImu->getAverageYaw(nSamples) << endl;
-            cout << "Roll: " << pImu->getAverageRoll(nSamples) << endl;
-            cout << "Pich: " << pImu->getAveragePitch(nSamples) << endl;
+            cout << "Acceleration: " << pImu->getAverageAccel(nSamples);
+            cout << ", Heading: " << pImu->getAverageYaw(nSamples);
+            cout << ", Roll: " << pImu->getAverageRoll(nSamples);
+            cout << ", Pich: " << pImu->getAveragePitch(nSamples) << endl;
         }
         this_thread::yield();
     }
