@@ -184,7 +184,7 @@ int BNO055_read_combined_data(bno055_euler_t* hrp, bno055_linear_accel_t* accel 
         return -4;
 
     // Buffer starts at gyro data which is yaw rate in fusion mode
-    hrp->h = rxBuff[2] | (rxBuff[3] << 8);default
+    hrp->h = rxBuff[2] | (rxBuff[3] << 8);
     hrp->r = rxBuff[4] | (rxBuff[5] << 8);
     hrp->p = rxBuff[6] | (rxBuff[7] << 8);
     // ... euler data (6)
