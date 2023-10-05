@@ -20,9 +20,9 @@ int main(){
     flagKeepRunning.test_and_set();
     signal(SIGINT, sigHandler);
 
-    Imu* imu = new Imu(BUFFER_SIZE);
-    imu->start();
-    Display* display = new Display();
+    Imu* pImu = new Imu(BUFFER_SIZE);
+    Display* display = new Display(pImu);
+    pImu->start();
     display->start();
 
     // Main loop
@@ -48,17 +48,17 @@ int main(){
             display->setSampleSize(nSamples);
             cout << "Set the number of sample to average over to " << nSamples << endl;
         }else if(line.compare("d") == 0){
-            cout << "Acceleration: " << imu->getAverageAccel(nSamples) << endl;
-            cout << "Heading: " << imu->getAverageYaw(nSamples) << endl;
-            cout << "Roll: " << imu->getAverageRoll(nSamples) << endl;
-            cout << "Pich: " << imu->getAveragePitch(nSamples) << endl;
+            cout << "Acceleration: " << pImu->getAverageAccel(nSamples) << endl;
+            cout << "Heading: " << pImu->getAverageYaw(nSamples) << endl;
+            cout << "Roll: " << pImu->getAverageRoll(nSamples) << endl;
+            cout << "Pich: " << pImu->getAveragePitch(nSamples) << endl;
         }
         this_thread::yield();
     }
     // Clean up and exit
     cout << endl << "Killing  threads..." << endl;
     delete display;
-    delete imu;
+    delete pImu;
     close(fd);
     return result;
 }
