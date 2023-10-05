@@ -8,6 +8,7 @@ using namespace std;
 
 atomic_flag flagKeepRunning;
 Imu* pImu;
+extern int nSampleSize;
 
 void sigHandler(int signum){
     flagKeepRunning.clear();
@@ -45,11 +46,10 @@ int main(){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
             bno055_set_sys_rst(1);
         }else if(line.find("s") == 0){
-            int nSampleSize = stoi(line.substr(1));
-            display->setSampleSize(nSampleSize);
+            nSampleSize = stoi(line.substr(1));
             cout << "Set the number of sample to average over to " << nSampleSize << endl;
         }else if(line.compare("d") == 0){
-            int nSampleSize = display->getSampleSize();
+
             cout << "Differential IMU readings over " << nSampleSize << " samples" << endl;
             
             cout << "Acceleration: " << pImu->getAverageAccel(nSampleSize);
