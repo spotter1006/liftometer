@@ -6,10 +6,11 @@
 
 class Display{
     public:
-        Display(Imu* pImu);
+        Display();
         ~Display();
         int start();
-        void setSampleSize(int nSampleSize);
+        inline void setSampleSize(int nSampleSize){m_nSampleSize = nSampleSize;}
+        inline int getSampleSize(){return m_nSampleSize;}
     private:
         Imu* m_pImu;
         static int updater(Display* pDisplay);

@@ -7,10 +7,12 @@
 using namespace std;
 
 extern timed_mutex mtxData;
+extern Imu* pImu;
+extern int nSampleSize;
 
-Display::Display(Imu* pImu){
+Display::Display(){
     m_pImu = pImu;
-    m_nSampleSize = 32;
+    m_nSampleSize = 1;
     m_nSlaveAddr = 0x40;
     _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
@@ -23,9 +25,7 @@ Display::~Display(){
     PCA9685_setAllPWM(m_nFd, m_nSlaveAddr, _PCA9685_MINVAL, _PCA9685_MINVAL);
 
 }
-void Display::setSampleSize(int nSampleSize){
-    m_nSampleSize = nSampleSize;
-}
+
 int Display::updater(Display* pDisplay){
     double dRoll;
     double dPitch;
@@ -40,14 +40,14 @@ int Display::updater(Display* pDisplay){
         
         mtxData.lock();
         
-        // Access data here
-
-        
-        mtxData.unlock();
-        // dAccel = m_pImu->getAverageAccel(m_nSampleSize);
+          // dAccel = pImu->getAverageAccel(nSampleSize);
         // dRoll = m_pImu->getAverageRoll(m_nSampleSize);
         // dPitch = m_pImu->getAveragePitch(m_nSampleSize);
         // dRoll = m_pImu->getAverageYaw(m_nSampleSize);
+
+        
+        mtxData.unlock();
+      
         // PCA9685_setPWMVals(m_nFd, m_nFd, m_nOnVals, m_nOffVals);
         this_thread::sleep_until(timePt);
     }

@@ -7,6 +7,8 @@
 using namespace std;
 
 atomic_flag flagKeepRunning;
+Imu* pImu;
+
 void sigHandler(int signum){
     flagKeepRunning.clear();
 }
@@ -15,13 +17,12 @@ int main(){
     extern int fd;
     cout << "Starting liftometer with " << BUFFER_SIZE << " element buffers" << endl;
     int result =0;
-    int nSamples =32;
 
     flagKeepRunning.test_and_set();
     signal(SIGINT, sigHandler);
 
-    Imu* pImu = new Imu(BUFFER_SIZE);
-    Display* display = new Display(pImu);
+    pImu = new Imu(BUFFER_SIZE);
+    Display* display = new Display();
     pImu->start();
     display->start();
 
@@ -43,15 +44,18 @@ int main(){
         }else if(line.compare("r") == 0){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
             bno055_set_sys_rst(1);
-        }else if(line.compare("s") == 0){
-            nSamples = stoi(line.substr(1));
-            display->setSampleSize(nSamples);
-            cout << "Set the number of sample to average over to " << nSamples << endl;
+        }else if(line.find("s") == 0){
+            int nSampleSize = stoi(line.substr(1));
+            display->setSampleSize(nSampleSize);
+            cout << "Set the number of sample to average over to " << nSampleSize << endl;
         }else if(line.compare("d") == 0){
-            cout << "Acceleration: " << pImu->getAverageAccel(nSamples);
-            cout << ", Heading: " << pImu->getAverageYaw(nSamples);
-            cout << ", Roll: " << pImu->getAverageRoll(nSamples);
-            cout << ", Pich: " << pImu->getAveragePitch(nSamples) << endl;
+            int nSampleSize = display->getSampleSize();
+            cout << "Differential IMU readings over " << nSampleSize << " samples" << endl;
+            
+            cout << "Acceleration: " << pImu->getAverageAccel(nSampleSize);
+            cout << ", Heading: " << pImu->getAverageYaw(nSampleSize);
+            cout << ", Roll: " << pImu->getAverageRoll(nSampleSize);
+            cout << ", Pitch: " << pImu->getAveragePitch(nSampleSize) << endl;
         }
         this_thread::yield();
     }
