@@ -20,7 +20,6 @@ Display::Display(){
 Display::~Display(){
     pthread_cancel(m_tUpdater.native_handle());
     PCA9685_setAllPWM(m_nFd, m_nSlaveAddr, _PCA9685_MINVAL, _PCA9685_MINVAL);
-
 }
 
 int Display::updater(Display* pDisplay){
@@ -75,7 +74,7 @@ int Display::updater(Display* pDisplay){
         nOffVals[2] - 4095 - nOnVals[2];
 
         // pDisplay->setPWMVals(nOnVals, nOffVals);
-        printf("Accel: %4.1lf roll: %4.1lf pitch: %4.1lf\r", dAccel, dRoll, dPitch);
+        printf("Average(%d): Accel: %lf roll: %lf pitch: %lf\r", nSampleSize, dAccel, dRoll / 16.0, dPitch / 16.0);
         fflush(stdout);
         
          this_thread::sleep_until(timePt);
