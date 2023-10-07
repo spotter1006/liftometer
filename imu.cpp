@@ -92,7 +92,7 @@ int Imu::imuPoller(Imu* pImu){
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(50);      
+            chrono::steady_clock::now() + chrono::milliseconds(20);      // 50 hz
         
         mtxData.lock();
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
