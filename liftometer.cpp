@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "display.hpp"
-#define BUFFER_SIZE 1000000
+#define BUFFER_SIZE 10000000    // 10 million samples 
 using namespace std;
 
 atomic_flag flagKeepRunning;

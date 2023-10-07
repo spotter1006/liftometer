@@ -37,7 +37,7 @@ double Average::calc(int nSamples){
     }
     partial_sum(m_dData.begin(), it, result.begin());
 
-    return *result.begin() / nCount;
+    return *result.begin() / (double)nCount;
 }
 void Average::print(void){
     auto print = [](const int& n) { cout <<  n << ' '; };
