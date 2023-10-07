@@ -95,7 +95,7 @@ static struct bno055_t *p_bno055;
  */
 BNO055_RETURN_FUNCTION_TYPE bno055_init(struct bno055_t *bno055)
 {
-    BNO055_RETURN_FUNCTION_TYPE com_rslt = BNO055_ERROR;
+    BNO055_RETURN_FUNCTION_TYPE com_rslt = BNO055_SUCCESS;
     u8 data_u8 = BNO055_INIT_VALUE;
     u8 bno055_page_zero_u8 = BNO055_PAGE_ZERO;
 

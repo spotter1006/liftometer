@@ -14,7 +14,7 @@ int fd;     // Handle to serial port
 #define I2C0           5
 
 u8 txBuff[16];
-u8 rxBuff[32];
+u8 rxBuff[50];
 
 // u8 len;
 s8 nStatus;
@@ -148,7 +148,7 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
                     }
                     else if(rxBuff[1] != 1){
                         nStatus = rxBuff[1];
-                        printf("BNO055_uart_bus_write: 0x%x: %s error received\n", nStatus, ackMessages[nStatus]);
+                        printf("BNO055_uart_bus_write: 0x%x: %s error \n", nStatus, ackMessages[nStatus]);
                         nRetries = -1;      // Dont retry on any other codes
                     }else{                  // Success
                         nStatus = 0;
@@ -165,33 +165,38 @@ s8 BNO055_uart_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     return nRetries > 0;
 }
 
-int BNO055_read_combined_data(bno055_euler_t* hrp, bno055_linear_accel_t* accel ){
-    int nRead = 0;
-    int nWritten = 0;
-
+int BNO055_read_combined_data(bno055_gyro_t *gyro, bno055_euler_t* hrp, bno055_linear_accel_t* accel ){
+    
+    // Read all 50 bytes of page 0
     txBuff[0] = COMMAND_START_BYTE;  
     txBuff[1] = 0x01,   // Read operation
-    txBuff[2] = BNO055_GYRO_DATA_X_LSB_ADDR;   
-    txBuff[3] = 26;     // Read 26 bytes (hrp, euler, quaternion, linear acceleration)
+    txBuff[2] = 0;   
+    txBuff[3] = 50;     
 
-    if(nWritten = write(fd, txBuff, 4) != 4) 
+    if(write(fd, txBuff, 4) != 4) 
         return -1;
-    if(nRead = read(fd, rxBuff, 28) != 28)  // Data plus 2 byte header
+    if(read(fd, rxBuff, 52) != 52)  // Data plus 2 byte header
         return -2;
     if(rxBuff[0] != RESPONSE_START_BYTE) 
         return -3;
-    if(rxBuff[1] != 26) 
+    if(rxBuff[1] != 50) 
         return -4;
 
-    // Buffer starts at gyro data which is yaw rate in fusion mode
-    hrp->h = rxBuff[2] | (rxBuff[3] << 8);
-    hrp->r = rxBuff[4] | (rxBuff[5] << 8);
-    hrp->p = rxBuff[6] | (rxBuff[7] << 8);
-    // ... euler data (6)
-    // ... quaternion data (8)
-    accel->x = rxBuff[22] | (rxBuff[23] << 8);
-    accel->y = rxBuff[24] | (rxBuff[25] << 8);
-    accel->z = rxBuff[26] | (rxBuff[27] << 8);
+    u8 *pData = rxBuff + 2;  // Skip the header
+    // Gyro data (6)
+    gyro->x = pData[BNO055_GYRO_DATA_X_LSB_ADDR] | (pData[BNO055_GYRO_DATA_X_MSB_ADDR] << 8);  
+    gyro->y = pData[BNO055_GYRO_DATA_Y_LSB_ADDR] | (pData[BNO055_GYRO_DATA_Y_MSB_ADDR] << 8);  
+    gyro->z = pData[BNO055_GYRO_DATA_Z_LSB_ADDR] | (pData[BNO055_GYRO_DATA_Z_MSB_ADDR] << 8);
+
+    //euler data (6)
+    hrp->h = pData[BNO055_EULER_H_LSB_ADDR] | (pData[BNO055_EULER_H_MSB_ADDR] << 8);
+    hrp->r = pData[BNO055_EULER_R_LSB_ADDR] | (pData[BNO055_EULER_R_MSB_ADDR] << 8);
+    hrp->p = pData[BNO055_EULER_P_LSB_ADDR] | (pData[BNO055_EULER_P_MSB_ADDR] << 8);
+    
+    //Linear acceleration data (6)
+    accel->x = pData[BNO055_LINEAR_ACCEL_DATA_X_LSB_ADDR] | (pData[BNO055_LINEAR_ACCEL_DATA_X_MSB_ADDR] << 8);
+    accel->y = pData[BNO055_LINEAR_ACCEL_DATA_Y_LSB_ADDR] | (pData[BNO055_LINEAR_ACCEL_DATA_Y_MSB_ADDR] << 8);
+    accel->z = pData[BNO055_LINEAR_ACCEL_DATA_Z_LSB_ADDR] | (pData[BNO055_LINEAR_ACCEL_DATA_Z_MSB_ADDR] << 8);
     return 0;
 }
 void BNO055_delay_msek(u32 msek){ 

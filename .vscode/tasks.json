@@ -6,7 +6,10 @@
 			"label": "C/C++: g++ build",
 			"command": "/usr/bin/g++",
 			"args": [
-				"-fpermissive",
+				// "-fvisibility=default",
+				"-Wl,--verbose",
+				"-lgpiodcxx",
+				// "-fpermissive",
 				"-I${workspaceFolder}../",
 				"-pthread",
 				"-fdiagnostics-color=always",

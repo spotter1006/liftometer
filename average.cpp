@@ -21,16 +21,23 @@ void Average::add(int data){
     }
 }
 double Average::calc(int nSamples){
+    if(m_dData.size() <=0)  // Before the first data point has arrived
+        return 0.0;
+
+    int nCount;
     list<int> result;
     list<int>::iterator it;
     if(nSamples <= m_dData.size()){
         it = m_dData.begin();
         advance(it, nSamples);
+        nCount = nSamples;
     }else{
         it = m_dData.end();
+        nCount = m_dData.size();
     }
     partial_sum(m_dData.begin(), it, result.begin());
-    return *result.begin() / (double)m_dData.size();
+
+    return *result.begin() / nCount;
 }
 void Average::print(void){
     auto print = [](const int& n) { cout <<  n << ' '; };
