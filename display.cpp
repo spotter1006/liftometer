@@ -11,7 +11,7 @@ extern Imu* pImu;
 int nSampleSize;
 
 Display::Display(){
-    nSampleSize = 1000;
+    nSampleSize = 10;
     m_nSlaveAddr = 0x40;
     // _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
@@ -44,18 +44,19 @@ int Display::updater(Display* pDisplay){
         dAccel = pImu->getAverageAccel(nSampleSize);
         dRoll = pImu->getAverageRoll(nSampleSize);
         dPitch = pImu->getAveragePitch(nSampleSize);
-        dYaw = pImu->getAverageYaw(nSampleSize);
+        dYaw = pImu->getAverageYawRate(nSampleSize);
         mtxData.unlock();   
         
-        /* Miuzei 9g servos:
-            0        90      120 +/- 10      mechanical (degrees)
-            900      1500    2100            high pulse width (uS)
-            450      750     1050            counts in the PCA2865 "on" register
-        
-            2100 uS period = 476.19 Hz frequency 
-            4096 counts per PWM cycle -> 37.24 - 31.5 counts per degree 
-                  34 counts per degree
-                  1 count is 2 uS       */     
+        /* Miuzei 9g servos: ******************************************************
+         *   0        90      120 +/- 10      mechanical (degrees)
+         *   900      1500    2100            high pulse width (uS)
+         *   450      750     1050            counts in the PCA2865 "on" register
+         * 
+         *   2100 uS period = 476.19 Hz frequency  
+         *   4096 counts per PWM cycle -> 31.5 to 37.24 counts per degree 
+         *     middle: 34 counts per degree
+         *   1 count is 2 uS       
+         **************************************************************************/     
 
         // Acceleration
         nOnVals[3] = 450 + dAccel * 100.0;      // TODO: scale for range
@@ -73,11 +74,10 @@ int Display::updater(Display* pDisplay){
         nOnVals[2] = 450 + dYaw * 34.0;
         nOffVals[2] - 4095 - nOnVals[2];
 
-
-
-
-        pDisplay->setPWMVals(nOnVals, nOffVals);
-
+        // pDisplay->setPWMVals(nOnVals, nOffVals);
+        printf("Accel: %4.1lf roll: %4.1lf pitch: %4.1lf\r", dAccel, dRoll, dPitch);
+        fflush(stdout);
+        
          this_thread::sleep_until(timePt);
     }
     return nResult;

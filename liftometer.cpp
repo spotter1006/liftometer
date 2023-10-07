@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "display.hpp"
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 1000000
 using namespace std;
 
 atomic_flag flagKeepRunning;
@@ -49,11 +49,9 @@ int main(){
             nSampleSize = stoi(line.substr(1));
             cout << "Set the number of sample to average over to " << nSampleSize << endl;
         }else if(line.compare("d") == 0){
-
-            cout << "Differential IMU readings over " << nSampleSize << " samples" << endl;
-            
+            cout << "Differential IMU readings over " << nSampleSize << " samples" << endl;         
             cout << "Acceleration: " << pImu->getAverageAccel(nSampleSize);
-            cout << ", Heading: " << pImu->getAverageYaw(nSampleSize);
+            cout << ", Heading: " << pImu->getAverageYawRate(nSampleSize);
             cout << ", Roll: " << pImu->getAverageRoll(nSampleSize);
             cout << ", Pitch: " << pImu->getAveragePitch(nSampleSize) << endl;
         }
