@@ -35,13 +35,12 @@ int Imu::start(){
     s8 stat;
     int nRet;
 
-    // Reset the IMU on GPIO line 18
-    // gpiod::chip chip("gpiochip0");
-    // auto line = chip.get_line(18);  
-    // line.request({"liftometer", gpiod::line_request::DIRECTION_OUTPUT, 0},1);  
-    // usleep(600);
-    // line.set_value(0);
-    // line.release();
+    gpiod::chip chip("gpiochip0");
+    auto line = chip.get_line(18);  
+    line.request({"liftometer", gpiod::line_request::DIRECTION_OUTPUT, 0},1);  
+    usleep(50);
+    line.set_value(0);
+    line.release();
   
     fd = BNO055_uart_init(B115200);
     string message = (fd > 0)? "Successfully intialized the UART" : "Error initialing the UART";

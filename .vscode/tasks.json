@@ -6,9 +6,10 @@
 			"label": "C/C++: g++ build",
 			"command": "/usr/bin/g++",
 			"args": [
-				// "-fvisibility=default",
-				"-Wl,--verbose",
-				"-lgpiodcxx",
+				"-Bdynamic",
+				"-Wl,--verbose ",
+				"-Wl,--start-group ",
+				"-l:libgpiodcxx.so",
 				// "-fpermissive",
 				"-I${workspaceFolder}../",
 				"-pthread",
