@@ -103,16 +103,16 @@ BNO055_RETURN_FUNCTION_TYPE bno055_init(struct bno055_t *bno055)
 
     /* Array holding the Software revision id
      */
-    u8 a_SW_ID_u8[BNO055_REV_ID_SIZE] = { BNO055_INIT_VALUE, BNO055_INIT_VALUE };
+    // u8 a_SW_ID_u8[BNO055_REV_ID_SIZE] = { BNO055_INIT_VALUE, BNO055_INIT_VALUE };
 
     /* stuct parameters are assign to bno055*/
     p_bno055 = bno055;
 
     /* Write the default page as zero*/
-    com_rslt = p_bno055->BNO055_BUS_WRITE_FUNC(p_bno055->dev_addr,
-                                               BNO055_PAGE_ID_REG,
-                                               &bno055_page_zero_u8,
-                                               BNO055_GEN_READ_WRITE_LENGTH);
+    // com_rslt = p_bno055->BNO055_BUS_WRITE_FUNC(p_bno055->dev_addr,
+    //                                            BNO055_PAGE_ID_REG,
+    //                                            &bno055_page_zero_u8,
+    //                                            BNO055_GEN_READ_WRITE_LENGTH);
 
     /* Read the chip id of the sensor from page
      * zero 0x00 register*/
