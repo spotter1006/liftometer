@@ -6,18 +6,15 @@
 			"label": "C/C++: g++ build",
 			"command": "/usr/bin/g++",
 			"args": [
-				"-Bdynamic",
-				"-Wl,--verbose ",
-				"-Wl,--start-group ",
-				"-l:libgpiodcxx.so",
-				// "-fpermissive",
+				// "-Wl,--verbose ",
 				"-I${workspaceFolder}../",
 				"-pthread",
 				"-fdiagnostics-color=always",
 				"-g",
 				"${workspaceFolder}/*.c*",
 				"-o",
-				"${fileDirname}/build/debug/liftometer"
+				"${fileDirname}/build/debug/liftometer",
+				"-lgpiodcxx"		// This has to be after the object file creation step or symbols are not found
 			],
 			"options": {
 				"cwd": "${fileDirname}"
