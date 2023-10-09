@@ -35,13 +35,15 @@ int Imu::start(){
     s8 stat;
     int nRet;
 
-    // Reset the IMU on GPIO line 18
-    // gpiod::chip chip("gpiochip0");
-    // auto line = chip.get_line(18);  
-    // line.request({"liftometer", gpiod::line_request::DIRECTION_OUTPUT, 0},1);  
-    // usleep(600);
-    // line.set_value(0);
-    // line.release();
+    // Reset the BNO055
+    gpiod::chip chip("gpiochip0");
+    auto line = chip.get_line(18);  
+    line.request({"liftometer", gpiod::line_request::DIRECTION_OUTPUT, 0},0);  
+    usleep(50);
+    line.set_value(1);
+    line.release();
+
+    sleep(1);       // Wait for the chip to come back
   
     fd = BNO055_uart_init(B115200);
     string message = (fd > 0)? "Successfully intialized the UART" : "Error initialing the UART";
@@ -53,17 +55,15 @@ int Imu::start(){
     bno055.delay_msec = BNO055_delay_msek;
 
     stat = bno055_init(&bno055);    
-    if(stat == 0){
-        cout << "Successfully intialized the BNO055" << endl;
-    }else{
-        cout << "Error initializing BNO05. " << endl;
-    }
+   
     stat = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
     if(stat == 0){
         cout << "Successfully set BNO055 NDOF mode" << endl;
+        sleep(.02);
     }else{
-        cout << "Failed to se BNO05 NDOF mode. " << endl;
+        cout << "Failed to set BNO05 NDOF mode. " << endl;
     }
+
     thread m_tPoller(imuPoller, this);  
     m_tPoller.detach();
     return nRet;
