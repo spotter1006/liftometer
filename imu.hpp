@@ -15,18 +15,22 @@ class Imu{
         ~Imu();
         static int imuPoller(Imu*); // Main thread
         int start();
-        double getAverageAccel(int nSamples);
-        double getAverageRoll(int nSamples);
+                double getAverageRoll(int nSamples);
         double getAveragePitch(int nSamples);
-        double getAverageYawRate(int nSamples);
+        double getAverageAccelX(int nSamples);
+        double getAverageAccelY(int nSamples);
+        double getAverageYawRateX(int nSamples);
+        double getAverageYawRateY(int nSamples);
         inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
         inline void unlock(void){m_mtxData.unlock();}
     private:        
         int m_nBufferSize;
         Average* m_pRoll;
         Average* m_pPitch;
-        Average* m_pYawRate;
-        Average* m_pAccel;
+        Average* m_pYawRateX;
+        Average* m_pYawRateY;
+        Average* m_pAccelX;
+        Average* m_pAccelY;
         timed_mutex m_mtxData;
         std::thread m_tPoller;
 };

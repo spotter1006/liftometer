@@ -4,6 +4,7 @@
 #include "liftometer.hpp"
 #include "PCA9685.h"
 #include <cstring>
+#include <math.h>
 using namespace std;
 
 extern timed_mutex mtxData;
@@ -23,10 +24,6 @@ Display::~Display(){
 }
 
 int Display::updater(Display* pDisplay){
-    double dRoll;
-    double dPitch;
-    double dYaw;
-    double dAccel;
     unsigned int nOnVals[16];
     unsigned int nOffVals[16];
 
@@ -40,11 +37,14 @@ int Display::updater(Display* pDisplay){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(500);    // 2 Hz indicator updates
         
         mtxData.lock();   
-        dAccel = pImu->getAverageAccel(nSampleSize);
-        dRoll = pImu->getAverageRoll(nSampleSize);
-        dPitch = pImu->getAveragePitch(nSampleSize);
-        dYaw = pImu->getAverageYawRate(nSampleSize);
+        double dAccelX = pImu->getAverageAccelX(nSampleSize);
+        double dAccelY = pImu->getAverageAccelY(nSampleSize);       
+        double dRoll = pImu->getAverageRoll(nSampleSize);
+        double dPitch = pImu->getAveragePitch(nSampleSize);
         mtxData.unlock();   
+
+        double dYawRate = atan2(pImu->getAverageYawRateY(nSampleSize), pImu->getAverageYawRateX(nSampleSize));
+        double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
         
         /* Miuzei 9g servos: ******************************************************
          *   0        90      120 +/- 10      mechanical (degrees)
@@ -70,7 +70,7 @@ int Display::updater(Display* pDisplay){
         nOffVals[1] - 4095 - nOnVals[1];
 
         // Yaw
-        nOnVals[2] = 450 + dYaw * 34.0;
+        nOnVals[2] = 450 + dYawRate * 34.0;
         nOffVals[2] - 4095 - nOnVals[2];
 
         // pDisplay->setPWMVals(nOnVals, nOffVals);

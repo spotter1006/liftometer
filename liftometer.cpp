@@ -40,7 +40,6 @@ int main(){
             cout << "h - diplay this help message" << endl;
             cout << "r - reset the BNO055" << endl;
             cout << "s<integer> - set th number of samples to use for the averages" << endl;
-            cout << "d - display the average data" << endl;
             cout << "q - quit liftometer" << endl;
         }else if(line.compare("r") == 0){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
@@ -48,12 +47,6 @@ int main(){
         }else if(line.find("s") == 0){
             nSampleSize = stoi(line.substr(1));
             cout << "Set the number of sample to average over to " << nSampleSize << endl;
-        }else if(line.compare("d") == 0){
-            cout << "Differential IMU readings over " << nSampleSize << " samples" << endl;         
-            cout << "Acceleration: " << pImu->getAverageAccel(nSampleSize);
-            cout << ", Heading: " << pImu->getAverageYawRate(nSampleSize);
-            cout << ", Roll: " << pImu->getAverageRoll(nSampleSize);
-            cout << ", Pitch: " << pImu->getAveragePitch(nSampleSize) << endl;
         }
         this_thread::yield();
     }

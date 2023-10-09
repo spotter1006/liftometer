@@ -18,16 +18,19 @@ Imu::Imu(int nBufferSize){
     m_nBufferSize =nBufferSize;
     m_pRoll = new Average(m_nBufferSize);
     m_pPitch = new Average(m_nBufferSize);
-    m_pYawRate = new Average(m_nBufferSize);
-    m_pAccel = new Average(m_nBufferSize);
-
+    m_pYawRateX = new Average(m_nBufferSize);
+    m_pYawRateY = new Average(m_nBufferSize);
+    m_pAccelX = new Average(m_nBufferSize);
+    m_pAccelY = new Average(m_nBufferSize);
 }
 Imu::~Imu(){
     pthread_cancel(m_tPoller.native_handle());
     delete m_pRoll;
     delete m_pPitch;
-    delete m_pYawRate;
-    delete m_pAccel;
+    delete m_pYawRateX;
+    delete m_pYawRateY;
+    delete m_pAccelX;
+    delete m_pAccelY;
 }
 
 int Imu::start(){
@@ -101,22 +104,21 @@ int Imu::imuPoller(Imu* pImu){
         if(result ==0){
             pImu->m_pRoll->add(hrp.r);
             pImu->m_pPitch->add(hrp.p);
-
-            // Gyro holds yaw rate in sensor fusion mode
-            double yawRate = atan2(gyro.y, gyro.x);     // Just the horizonal plane
-            pImu->m_pYawRate->add(yawRate);      
-            
-            double dAccel = 
-            sqrt((double(accel.x * accel.x) + (double)(accel.y * accel.y))); // Just the horizontal plane
-            pImu->m_pAccel->add(dAccel);
+            pImu->m_pYawRateX->add(gyro.x);
+            pImu->m_pYawRateY->add(gyro.y);
+            pImu->m_pAccelX->add(accel.x);
+            pImu->m_pAccelY->add(accel.y);       
         }
  
         this_thread::sleep_until(timePt);
     }
     return 0;
 }
-double Imu::getAverageAccel(int nSamples){
-    return m_pAccel->calc( nSamples);
+double Imu::getAverageAccelX(int nSamples){
+    return m_pAccelX->calc( nSamples);
+}
+double Imu::getAverageAccelY(int nSamples){
+    return m_pAccelY->calc( nSamples);
 }
 double Imu::getAverageRoll(int nSamples){
     return m_pRoll->calc(nSamples);
@@ -124,7 +126,10 @@ double Imu::getAverageRoll(int nSamples){
 double Imu::getAveragePitch(int nSamples){
     return m_pPitch->calc(nSamples);
 }
-double Imu::getAverageYawRate(int nSamples){
-    return m_pYawRate->calc(nSamples);
+double Imu::getAverageYawRateX(int nSamples){
+    return m_pYawRateX->calc(nSamples);
+}
+double Imu::getAverageYawRateY(int nSamples){
+    return m_pYawRateY->calc(nSamples);
 }
 
