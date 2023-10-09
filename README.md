@@ -8,8 +8,10 @@ C and C++ project for the  sailing device, "liftometer".
 - A simple user shell is accessible through the standard console
 ## Dependencies
 gpiod:
-   sudo apt install gpiod
+	sudo apt install gpiod
+ 
    sudo apt install libgpiod-dev
 ## Build
 This commandline is for a debug build comatible with GDB and VSCode:
+
 /usr/bin/g++ -I/home/pi/swprojects/liftometer/liftometer../ -pthread -fdiagnostics-color=always -g /home/pi/swprojects/liftometer/liftometer/*.c* -o /home/pi/swprojects/liftometer/liftometer/build/debug/liftometer -lgpiodcxx
