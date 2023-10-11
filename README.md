@@ -1,8 +1,8 @@
 # liftometer
 C and C++ project for the  sailing device, "liftometer". 
 - Raspberryi Pi zero or 4 running Raspian (Bullseye)
-- Interfaces to a BNO055 IMU in UART communicatios mode 
-- Uses MakerFocus PWM servo drivers specific to the RasberryPi series of boards for the indicators
+- Uses a Bosch BNO055 IMU in UART communicatios mode connected to ttyS0. HW reset connected to GPIO18.
+- Uses 4 of 16 MakerFocus PWM servo drivers conncted to the Raspberry Pi IO headers
 - A simple user shell is accessible through the standard console
 ## Dependencies
 ### gpiod
