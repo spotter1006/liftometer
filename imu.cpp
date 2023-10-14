@@ -24,7 +24,7 @@ Imu::Imu(int nBufferSize){
     m_pAccelY = new Average(m_nBufferSize);
 }
 Imu::~Imu(){
-    pthread_cancel(m_tPoller.native_handle());
+    //pthread_cancel(m_tPoller.native_handle());
     delete m_pRoll;
     delete m_pPitch;
     delete m_pYawRateX;
@@ -61,7 +61,6 @@ int Imu::start(){
    
     stat = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
     if(stat == 0){
-        cout << "Successfully set BNO055 NDOF mode" << endl;
         sleep(.02);
     }else{
         cout << "Failed to set BNO05 NDOF mode. " << endl;
@@ -76,7 +75,6 @@ int Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
     int nPingPong = 0;
     int result;
-    cout << "IMU poller thread started" << endl;
     
     u8 currentMode;
 
@@ -95,7 +93,7 @@ int Imu::imuPoller(Imu* pImu){
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(20);      // 50 hz
+            chrono::steady_clock::now() + chrono::milliseconds(10);      // 100 hz
         
         mtxData.lock();
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
