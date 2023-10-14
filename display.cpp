@@ -48,9 +48,10 @@ int Display::updater(Display* pDisplay){
         printf("Average(%d): Accel: %lf roll: %lf pitch: %lf\r", nSampleSize, dAccel, dRoll / 16.0, dPitch / 16.0);
         fflush(stdout);  
 
-        imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);
-        imuAngleToPwm(dPitch,   &nOnVals[1], &nOffVals[1]);
-        imuAngleToPwm(dYawRate, &nOnVals[2], &nOffVals[2]);
+        imuAngleToPwm(dRoll /16.0,    &nOnVals[0], &nOffVals[0]);
+        imuAngleToPwm(dPitch /16.0,   &nOnVals[1], &nOffVals[1]);
+        imuAngleToPwm(dYawRate /16.0, &nOnVals[2], &nOffVals[2]);
+        
         imuAccelToPwm(dAccel,   &nOnVals[3], &nOffVals[3]);
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
