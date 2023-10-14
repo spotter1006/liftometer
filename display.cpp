@@ -14,12 +14,11 @@ int nSampleSize;
 Display::Display(){
     nSampleSize = 100;
     m_nSlaveAddr = 0x40;
-    // _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
+    _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
     int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, 476);
 }
 Display::~Display(){
-    //pthread_cancel(m_tUpdater.native_handle());
     PCA9685_setAllPWM(m_nFd, m_nSlaveAddr, _PCA9685_MINVAL, _PCA9685_MINVAL);
 }
 
@@ -46,36 +45,15 @@ int Display::updater(Display* pDisplay){
         double dYawRate = atan2(pImu->getAverageYawRateY(nSampleSize), pImu->getAverageYawRateX(nSampleSize));
         double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
         
-        /* Miuzei 9g servos: ******************************************************
-         *   0        90      120 +/- 10      mechanical (degrees)
-         *   900      1500    2100            high pulse width (uS)
-         *   450      750     1050            counts in the PCA2865 "on" register
-         * 
-         *   2100 uS period = 476.19 Hz frequency  
-         *   4096 counts per PWM cycle -> 31.5 to 37.24 counts per degree 
-         *     middle: 34 counts per degree
-         *   1 count is 2 uS       
-         **************************************************************************/     
-
-        // Roll
-        nOnVals[0] = 1500 + dRoll * (34.0 /16.0);
-        nOffVals[0] - 4095 - nOnVals[0];
-
-        // Pitch
-        nOnVals[1] = 1500 + dRoll * (34.0 /16.0);
-        nOffVals[1] - 4095 - nOnVals[1];
-
-        // Yaw
-        nOnVals[2] = 1500 + dYawRate * (34.0 /16.0);
-        nOffVals[2] - 4095 - nOnVals[2];
-
-        pDisplay->setPWMVals(nOnVals, nOffVals);
         printf("Average(%d): Accel: %lf roll: %lf pitch: %lf\r", nSampleSize, dAccel, dRoll / 16.0, dPitch / 16.0);
         fflush(stdout);  
-        
-        // Acceleration
-        nOnVals[3] = 450 + dAccel * 100.0;      // TODO: scale for range
-        nOffVals[3] - 4095 - nOnVals[3];
+
+        imuAngleToPwm(dRoll, nOnVals, nOffVals);
+        imuAngleToPwm(dPitch, nOnVals + 1, nOffVals + 1);
+        imuAngleToPwm(dYawRate, nOnVals + 2, nOffVals + 2);
+        imuAccelToPwm(dAccel, nOnVals + 3, nOffVals + 3);
+        pDisplay->setPWMVals(nOnVals, nOffVals);
+
          this_thread::sleep_until(timePt);
     }
     return nResult;
@@ -89,3 +67,34 @@ int Display::start(){
      return 0;
 }
 
+
+/* Miuzei 9g servos: ******************************************************
+*   0        90      120 +/- 10      mechanical (degrees)
+*   900      1500    2100            high pulse width (uS)
+*   450      750     1050            counts in the PCA2865 "on" register
+* 
+*   2100 uS period = 476.19 Hz frequency  
+*   4096 counts per PWM cycle -> 31.5 to 37.24 counts per degree 
+*     middle: 34 counts per degree
+*   1 count is 2 uS       
+**************************************************************************/    
+void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
+    int nOn =  IMU_PWM_ANGLE_OFFSET + angle * IMU_PWM_ANGLE_SCALE;
+    if (nOn < PWM_MIN)
+        nOn = PWM_MIN;
+    else if(nOn > PWM_MAX)
+        nOn = PWM_MAX;
+    int nOff = PWM_FULL_COUNT - nOn;
+    *on = nOn;
+    *off = nOff;
+} 
+void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
+    int nOn =  IMU_PWM_ACCEL_OFFSET + accel * IMU_PWM_ACCEL_SCALE;
+    if (nOn < PWM_MIN)
+        nOn = PWM_MIN;
+    else if(nOn > PWM_MAX)
+        nOn = PWM_MAX;
+    int nOff = PWM_FULL_COUNT - nOn;
+    *on = nOn;
+    *off = nOff;
+}

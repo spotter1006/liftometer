@@ -16,7 +16,6 @@ void sigHandler(int signum){
 
 int main(){
     extern int fd;
-    cout << "Starting liftometer with " << BUFFER_SIZE << " element buffers" << endl;
     int result =0;
 
     flagKeepRunning.test_and_set();

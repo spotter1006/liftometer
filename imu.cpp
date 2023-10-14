@@ -24,7 +24,6 @@ Imu::Imu(int nBufferSize){
     m_pAccelY = new Average(m_nBufferSize);
 }
 Imu::~Imu(){
-    //pthread_cancel(m_tPoller.native_handle());
     delete m_pRoll;
     delete m_pPitch;
     delete m_pYawRateX;
@@ -80,9 +79,7 @@ int Imu::imuPoller(Imu* pImu){
 
     result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     this_thread::sleep_for(chrono::milliseconds(20));
-    if(result == 0){
-        cout << "Successfully set operation mode to NDOF" << endl;
-    }else{
+    if(result != 0){
         cout << "Failed to set operation mode mode. IMU poller thread exiting." << endl;
         return -1;
     }
@@ -130,4 +127,3 @@ double Imu::getAverageYawRateX(int nSamples){
 double Imu::getAverageYawRateY(int nSamples){
     return m_pYawRateY->calc(nSamples);
 }
-
