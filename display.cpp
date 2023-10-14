@@ -14,7 +14,7 @@ int nSampleSize;
 Display::Display(){
     nSampleSize = 100;
     m_nSlaveAddr = 0x40;
-    //_PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
+    _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
     int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, PWM_FREQUENCY);
 }
@@ -48,10 +48,10 @@ int Display::updater(Display* pDisplay){
         printf("Average(%d): Accel: %lf roll: %lf pitch: %lf\r", nSampleSize, dAccel, dRoll / 16.0, dPitch / 16.0);
         fflush(stdout);  
 
-        imuAngleToPwm(dRoll, nOnVals, nOffVals);
-        imuAngleToPwm(dPitch, nOnVals + 1, nOffVals + 1);
-        imuAngleToPwm(dYawRate, nOnVals + 2, nOffVals + 2);
-        imuAccelToPwm(dAccel, nOnVals + 3, nOffVals + 3);
+        imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);
+        imuAngleToPwm(dPitch,   &nOnVals[1], &nOffVals[1]);
+        imuAngleToPwm(dYawRate, &nOnVals[2], &nOffVals[2]);
+        imuAccelToPwm(dAccel,   &nOnVals[3], &nOffVals[3]);
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
          this_thread::sleep_until(timePt);
