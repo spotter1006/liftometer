@@ -14,9 +14,9 @@ int nSampleSize;
 Display::Display(){
     nSampleSize = 100;
     m_nSlaveAddr = 0x40;
-    _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
+    //_PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
-    int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, 476);
+    int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, PWM_FREQUENCY);
 }
 Display::~Display(){
     PCA9685_setAllPWM(m_nFd, m_nSlaveAddr, _PCA9685_MINVAL, _PCA9685_MINVAL);
@@ -33,7 +33,7 @@ int Display::updater(Display* pDisplay){
     chrono::steady_clock::time_point timePt;
 
     while(1){
-        timePt = chrono::steady_clock::now() + chrono::milliseconds(1000);    // 1 Hz indicator updates
+        timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
         mtxData.lock();   
         double dAccelX = pImu->getAverageAccelX(nSampleSize);
@@ -67,19 +67,8 @@ int Display::start(){
      return 0;
 }
 
-
-/* Miuzei 9g servos: ******************************************************
-*   0        90      120 +/- 10      mechanical (degrees)
-*   900      1500    2100            high pulse width (uS)
-*   450      750     1050            counts in the PCA2865 "on" register
-* 
-*   2100 uS period = 476.19 Hz frequency  
-*   4096 counts per PWM cycle -> 31.5 to 37.24 counts per degree 
-*     middle: 34 counts per degree
-*   1 count is 2 uS       
-**************************************************************************/    
 void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
-    int nOn =  IMU_PWM_ANGLE_OFFSET + angle * IMU_PWM_ANGLE_SCALE;
+    int nOn =  PWM_ANGLE_OFFSET + angle * PWM_ANGLE_SCALE;
     if (nOn < PWM_MIN)
         nOn = PWM_MIN;
     else if(nOn > PWM_MAX)
@@ -89,7 +78,7 @@ void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
     *off = nOff;
 } 
 void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
-    int nOn =  IMU_PWM_ACCEL_OFFSET + accel * IMU_PWM_ACCEL_SCALE;
+    int nOn =  PWM_ACCEL_OFFSET + accel * PWM_ACCEL_SCALE;
     if (nOn < PWM_MIN)
         nOn = PWM_MIN;
     else if(nOn > PWM_MAX)
