@@ -1,5 +1,5 @@
 #include "encoder.hpp"
-
+extern gpiod::chip chip;
 /******************************************************************************
    Quadrature encoder makes two waveforms that are 90° out of phase:
                            _______         _______         __
@@ -41,9 +41,8 @@ int states[16] = {0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
 
 Encoder::Encoder(){
     m_nCount = 0;
-    gpiod::chip chip("gpiochip0");
-    m_lineA = chip.get_line(18); 
-    m_lineB = chip.get_line(19);
+    m_lineA = chip.get_line(23); 
+    m_lineB = chip.get_line(24);
     m_lineA.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);  
     m_lineB.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);
 }
@@ -60,13 +59,12 @@ int Encoder::start(){
 int Encoder::poller(Encoder* pEncoder){
     chrono::steady_clock::time_point timePt;
     while(1){
-        timePt = chrono::steady_clock::now() + chrono::milliseconds(1);
 
+        pEncoder->waitEdgeEvent(1ms);
         int nValA = pEncoder->m_lineA.get_value();
         int nValB = pEncoder->m_lineB.get_value();
-
         int nState =  pEncoder->getValA() << 4 | pEncoder->getValB() << 3 | nValA << 2 | nValB;
-        int nCount = states[nCount];
+        int nCount = states[nState];
 
         pEncoder->lock();
         pEncoder->add(nCount);
@@ -74,8 +72,6 @@ int Encoder::poller(Encoder* pEncoder){
 
         pEncoder->setValA(nValA);
         pEncoder->setValB(nValB);
-
-        this_thread::sleep_until(timePt);
     }
     return 0;
 }
@@ -85,4 +81,11 @@ int Encoder::getCount(){
     nCount = getCount();
     unlock();
     return nCount;
+}
+bool Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
+    bool eventA = m_lineA.event_wait(msTimeout);
+    if(eventA) return true;
+    bool eventB = m_lineB.event_wait(msTimeout);
+    if(eventB) return true;
+    return false;
 }

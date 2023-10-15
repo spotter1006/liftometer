@@ -3,11 +3,17 @@
 #include <signal.h>
 #include <unistd.h>
 #include "display.hpp"
+#include "encoder.hpp"
+
 #define BUFFER_SIZE 10000000    // 10 million samples 
 using namespace std;
 
 atomic_flag flagKeepRunning;
+gpiod::chip chip("gpiochip0");
 Imu* pImu;
+
+Display *pDisplay;
+Encoder *pEncoder;
 extern int nSampleSize;
 
 void sigHandler(int signum){
@@ -22,9 +28,12 @@ int main(){
     signal(SIGINT, sigHandler);
 
     pImu = new Imu(BUFFER_SIZE);
-    Display* display = new Display();
+    pDisplay = new Display();
+    pEncoder = new Encoder();
+
     pImu->start();
-    display->start();
+    pDisplay->start();
+    pEncoder->start();
 
     // Main loop
     string line;
@@ -52,8 +61,8 @@ int main(){
         this_thread::sleep_until(timePt);
     }
     // Clean up and exit
-    cout << endl << "Killing  threads..." << endl;
-    delete display;
+    delete pDisplay;
+    delete pEncoder;
     delete pImu;
     close(fd);
     return result;

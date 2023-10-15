@@ -64,6 +64,7 @@
     "shared_mutex": "cpp",
     "cmath": "cpp",
     "*.tcc": "c",
-    "bno055_support.h": "c"
+    "bno055_support.h": "c",
+    "chrono": "cpp"
   }
 }

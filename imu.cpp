@@ -12,6 +12,7 @@
 using namespace std;
 
 extern "C" struct bno055_t bno055;
+extern gpiod::chip chip;
 timed_mutex mtxData;
 
 Imu::Imu(int nBufferSize){
@@ -38,7 +39,7 @@ int Imu::start(){
     int nRet;
 
     // Reset the BNO055
-    gpiod::chip chip("gpiochip0");
+
     auto line = chip.get_line(18);  
     line.request({"liftometer", gpiod::line_request::DIRECTION_OUTPUT, 0},0);  
     usleep(50);

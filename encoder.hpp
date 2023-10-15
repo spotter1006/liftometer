@@ -22,6 +22,7 @@ class Encoder{
         inline void add(int n){m_nCount +=n;}
         int getCount();
     private:
+        bool waitEdgeEvent(chrono::milliseconds msTimeout);
         int m_nCount;
         mutex m_mtxData;
         thread m_tPoller;
