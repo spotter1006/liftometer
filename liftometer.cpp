@@ -62,6 +62,9 @@ int main(){
         this_thread::sleep_until(timePt);
     }
     // Clean up and exit
+    pDisplay->stop();
+    pEncoder->stop();
+    pImu->stop();
     delete pDisplay;
     delete pEncoder;
     delete pImu;

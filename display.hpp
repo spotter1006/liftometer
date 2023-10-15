@@ -26,16 +26,18 @@ class Display{
     public:
         Display();
         ~Display();
-        int start();
+        void start();
+        void stop();
         int setPWMVals(unsigned int * nOnVals, unsigned int *nOffVals);
+        inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
         static void imuAngleToPwm(double angle, unsigned int *on, unsigned int *off);
         static void imuAccelToPwm(double accel, unsigned int *on, unsigned int *off);
         static int updater(Display* pDisplay);
 
-
         std::thread m_tUpdater;
         int m_nFd;
         int m_nSlaveAddr;
+        bool m_bKeepRunning;
 };
 #endif

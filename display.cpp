@@ -14,6 +14,7 @@ int nSampleSize;
 Display::Display(){
     nSampleSize = 100;
     m_nSlaveAddr = 0x40;
+    m_bKeepRunning = true;
     //_PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
     int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, PWM_FREQUENCY);
@@ -32,7 +33,7 @@ int Display::updater(Display* pDisplay){
     int nResult = 0;
     chrono::steady_clock::time_point timePt;
 
-    while(1){
+    while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
         mtxData.lock();   
@@ -68,10 +69,13 @@ int Display::updater(Display* pDisplay){
 int Display::setPWMVals(unsigned int* nOnVals, unsigned int* nOffVals){
     return PCA9685_setPWMVals(m_nFd,m_nSlaveAddr,nOnVals, nOffVals);
 }
-int Display::start(){
-     thread m_tUpdater(updater, this);
-     m_tUpdater.detach();
-     return 0;
+void Display::start(){
+    m_bKeepRunning = true;
+    thread m_tUpdater(updater, this);
+    m_tUpdater.detach();
+}
+void Display::stop(){
+    m_bKeepRunning = false;  
 }
 
 void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){

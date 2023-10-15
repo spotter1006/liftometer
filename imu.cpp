@@ -16,6 +16,7 @@ extern gpiod::chip chip;
 timed_mutex mtxData;
 
 Imu::Imu(int nBufferSize){
+    m_bKeepRunning = true;
     m_nBufferSize =nBufferSize;
     m_pRoll = new Average(m_nBufferSize);
     m_pPitch = new Average(m_nBufferSize);
@@ -38,6 +39,7 @@ int Imu::start(){
     s8 stat;
     int nRet;
 
+    m_bKeepRunning = true;
     // Reset the BNO055
 
     auto line = chip.get_line(18);  
@@ -70,7 +72,9 @@ int Imu::start(){
     m_tPoller.detach();
     return nRet;
 }
-
+void Imu::stop(){
+    m_bKeepRunning = false;
+}
 int Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
     int nPingPong = 0;
@@ -84,7 +88,7 @@ int Imu::imuPoller(Imu* pImu){
         cout << "Failed to set operation mode mode. IMU poller thread exiting." << endl;
         return -1;
     }
-    while(1){   
+    while(pImu->isKeepRunning()){   
         bno055_gyro_t gyro;   
         bno055_euler_t hrp; // heading, roll, pitch
         bno055_linear_accel_t accel;    // Linear acceleration (gravity removed)

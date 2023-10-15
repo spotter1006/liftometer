@@ -65,6 +65,8 @@
     "cmath": "cpp",
     "*.tcc": "c",
     "bno055_support.h": "c",
-    "chrono": "cpp"
+    "chrono": "cpp",
+    "istream": "cpp",
+    "stop_token": "cpp"
   }
 }

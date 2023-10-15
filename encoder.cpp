@@ -40,6 +40,7 @@ extern gpiod::chip chip;
 int states[16] = {0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
 
 Encoder::Encoder(){
+    m_bKeepRunning = true;
     m_nCount = 0;
     m_lineA = chip.get_line(ENCODER_LINE_A); 
     m_lineB = chip.get_line(ENCODER_LINE_B);
@@ -52,13 +53,17 @@ Encoder::~Encoder(){
     m_lineB.release();
 }
 int Encoder::start(){
+    m_bKeepRunning = true;
     thread m_tPoller(poller, this);
     m_tPoller.detach();
-    return 0;
+    return(0);
+}
+void Encoder::stop(){
+    m_bKeepRunning = false;
 }
 int Encoder::poller(Encoder* pEncoder){
     chrono::steady_clock::time_point timePt;
-    while(1){
+    while(pEncoder->isKeepRunning()){
 
         pEncoder->waitEdgeEvent(1ms);
         int nValA = pEncoder->m_lineA.get_value();
