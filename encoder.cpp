@@ -58,7 +58,10 @@ int Encoder::start(){
     return 0;
 }
 int Encoder::poller(Encoder* pEncoder){
+    chrono::steady_clock::time_point timePt;
     while(1){
+        timePt = chrono::steady_clock::now() + chrono::milliseconds(1);
+
         int nValA = pEncoder->m_lineA.get_value();
         int nValB = pEncoder->m_lineB.get_value();
 
@@ -71,6 +74,8 @@ int Encoder::poller(Encoder* pEncoder){
 
         pEncoder->setValA(nValA);
         pEncoder->setValB(nValB);
+
+        this_thread::sleep_until(timePt);
     }
     return 0;
 }

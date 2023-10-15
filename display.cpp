@@ -40,22 +40,28 @@ int Display::updater(Display* pDisplay){
         double dAccelY = pImu->getAverageAccelY(nSampleSize);       
         double dRoll = pImu->getAverageRoll(nSampleSize);
         double dPitch = pImu->getAveragePitch(nSampleSize);
+        double dYawRateX = pImu->getAverageYawRateY(nSampleSize);
+        double dYawRateY = pImu->getAverageYawRateX(nSampleSize);
         mtxData.unlock();   
 
-        double dYawRate = atan2(pImu->getAverageYawRateY(nSampleSize), pImu->getAverageYawRateX(nSampleSize));
+        // IMU angle units are 1/16 of a degree
+        dRoll /= 16.0;
+        dPitch /= 16.0;
+        double dYawRate = atan2(dYawRateY, dYawRateX) / 16.0;
         double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
-        
-        printf("Average(%d): Accel: %lf roll: %lf pitch: %lf\r", nSampleSize, dAccel, dRoll / 16.0, dPitch / 16.0);
-        fflush(stdout);  
 
-        imuAngleToPwm(dRoll /16.0,    &nOnVals[0], &nOffVals[0]);
-        imuAngleToPwm(dPitch /16.0,   &nOnVals[1], &nOffVals[1]);
-        imuAngleToPwm(dYawRate /16.0, &nOnVals[2], &nOffVals[2]);
+        imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);
+        imuAngleToPwm(dPitch,   &nOnVals[1], &nOffVals[1]);
+        imuAngleToPwm(dYawRate, &nOnVals[2], &nOffVals[2]);
+        imuAccelToPwm(dAccel, &nOnVals[3], &nOffVals[3]);
 
-        imuAccelToPwm(dAccel,   &nOnVals[3], &nOffVals[3]);
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
-         this_thread::sleep_until(timePt);
+        printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+        nSampleSize, nOnVals[3], nOnVals[2], nOnVals[0], nOnVals[1]);
+        fflush(stdout); 
+
+        this_thread::sleep_until(timePt);
     }
     return nResult;
 }
@@ -69,7 +75,7 @@ int Display::start(){
 }
 
 void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
-    int nOn =  PWM_ANGLE_OFFSET + angle * PWM_ANGLE_SCALE;
+    int nOn =  PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
     if (nOn < PWM_MIN)
         nOn = PWM_MIN;
     else if(nOn > PWM_MAX)
@@ -79,7 +85,7 @@ void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
     *off = nOff;
 } 
 void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
-    int nOn =  PWM_ACCEL_OFFSET + accel * PWM_ACCEL_SCALE;
+    int nOn =  PWM_ACCEL_OFFSET + (accel * PWM_ACCEL_SCALE);
     if (nOn < PWM_MIN)
         nOn = PWM_MIN;
     else if(nOn > PWM_MAX)

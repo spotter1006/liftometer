@@ -1,3 +1,4 @@
+
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 #include <pthread.h>
@@ -31,9 +32,10 @@ class Display{
         static void imuAngleToPwm(double angle, unsigned int *on, unsigned int *off);
         static void imuAccelToPwm(double accel, unsigned int *on, unsigned int *off);
         static int updater(Display* pDisplay);
+
+
         std::thread m_tUpdater;
         int m_nFd;
         int m_nSlaveAddr;
 };
-
 #endif
