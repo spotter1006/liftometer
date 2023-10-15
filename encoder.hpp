@@ -5,6 +5,9 @@
 #include<thread>
 #include <mutex>
 
+#define ENCODER_LINE_A (23)
+#define ENCODER_LINE_B (24)
+
  using namespace std;
 
 class Encoder{

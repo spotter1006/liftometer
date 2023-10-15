@@ -8,13 +8,14 @@
 #define BUFFER_SIZE 10000000    // 10 million samples 
 using namespace std;
 
+
+// Static global variables
 atomic_flag flagKeepRunning;
 gpiod::chip chip("gpiochip0");
 Imu* pImu;
-
 Display *pDisplay;
 Encoder *pEncoder;
-extern int nSampleSize;
+extern int nSampleSize;     // TODO: demote this to the display class
 
 void sigHandler(int signum){
     flagKeepRunning.clear();

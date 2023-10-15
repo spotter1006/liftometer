@@ -41,8 +41,8 @@ int states[16] = {0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
 
 Encoder::Encoder(){
     m_nCount = 0;
-    m_lineA = chip.get_line(23); 
-    m_lineB = chip.get_line(24);
+    m_lineA = chip.get_line(ENCODER_LINE_A); 
+    m_lineB = chip.get_line(ENCODER_LINE_B);
     m_lineA.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);  
     m_lineB.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);
 }
@@ -70,6 +70,7 @@ int Encoder::poller(Encoder* pEncoder){
         pEncoder->add(nCount);
         pEncoder->unlock();
 
+        // Save current line states (will be the previous state on the next pass)
         pEncoder->setValA(nValA);
         pEncoder->setValB(nValB);
     }
