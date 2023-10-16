@@ -15,7 +15,8 @@ class Imu{
         ~Imu();
         static int imuPoller(Imu*); // Main thread
         int start();
-                double getAverageRoll(int nSamples);
+        void stop();
+        double getAverageRoll(int nSamples);
         double getAveragePitch(int nSamples);
         double getAverageAccelX(int nSamples);
         double getAverageAccelY(int nSamples);
@@ -23,6 +24,7 @@ class Imu{
         double getAverageYawRateY(int nSamples);
         inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
         inline void unlock(void){m_mtxData.unlock();}
+        inline bool isKeepRunning(){return m_bKeepRunning;}
     private:        
         int m_nBufferSize;
         Average* m_pRoll;
@@ -33,5 +35,6 @@ class Imu{
         Average* m_pAccelY;
         timed_mutex m_mtxData;
         std::thread m_tPoller;
+        bool m_bKeepRunning;
 };
 #endif

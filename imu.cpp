@@ -12,9 +12,11 @@
 using namespace std;
 
 extern "C" struct bno055_t bno055;
+extern gpiod::chip chip;
 timed_mutex mtxData;
 
 Imu::Imu(int nBufferSize){
+    m_bKeepRunning = true;
     m_nBufferSize =nBufferSize;
     m_pRoll = new Average(m_nBufferSize);
     m_pPitch = new Average(m_nBufferSize);
@@ -24,7 +26,6 @@ Imu::Imu(int nBufferSize){
     m_pAccelY = new Average(m_nBufferSize);
 }
 Imu::~Imu(){
-    pthread_cancel(m_tPoller.native_handle());
     delete m_pRoll;
     delete m_pPitch;
     delete m_pYawRateX;
@@ -38,8 +39,9 @@ int Imu::start(){
     s8 stat;
     int nRet;
 
+    m_bKeepRunning = true;
     // Reset the BNO055
-    gpiod::chip chip("gpiochip0");
+
     auto line = chip.get_line(18);  
     line.request({"liftometer", gpiod::line_request::DIRECTION_OUTPUT, 0},0);  
     usleep(50);
@@ -61,7 +63,6 @@ int Imu::start(){
    
     stat = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
     if(stat == 0){
-        cout << "Successfully set BNO055 NDOF mode" << endl;
         sleep(.02);
     }else{
         cout << "Failed to set BNO05 NDOF mode. " << endl;
@@ -71,31 +72,30 @@ int Imu::start(){
     m_tPoller.detach();
     return nRet;
 }
-
+void Imu::stop(){
+    m_bKeepRunning = false;
+}
 int Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
     int nPingPong = 0;
     int result;
-    cout << "IMU poller thread started" << endl;
     
     u8 currentMode;
 
     result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     this_thread::sleep_for(chrono::milliseconds(20));
-    if(result == 0){
-        cout << "Successfully set operation mode to NDOF" << endl;
-    }else{
+    if(result != 0){
         cout << "Failed to set operation mode mode. IMU poller thread exiting." << endl;
         return -1;
     }
-    while(1){   
+    while(pImu->isKeepRunning()){   
         bno055_gyro_t gyro;   
         bno055_euler_t hrp; // heading, roll, pitch
         bno055_linear_accel_t accel;    // Linear acceleration (gravity removed)
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(20);      // 50 hz
+            chrono::steady_clock::now() + chrono::milliseconds(10);      // 100 hz
         
         mtxData.lock();
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
@@ -132,4 +132,3 @@ double Imu::getAverageYawRateX(int nSamples){
 double Imu::getAverageYawRateY(int nSamples){
     return m_pYawRateY->calc(nSamples);
 }
-

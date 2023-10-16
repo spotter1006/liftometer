@@ -1,5 +1,5 @@
 #include "encoder.hpp"
-
+extern gpiod::chip chip;
 /******************************************************************************
    Quadrature encoder makes two waveforms that are 90° out of phase:
                            _______         _______         __
@@ -40,10 +40,10 @@
 int states[16] = {0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
 
 Encoder::Encoder(){
-    m_nCount = 0;
-    gpiod::chip chip("gpiochip0");
-    m_lineA = chip.get_line(18); 
-    m_lineB = chip.get_line(19);
+    m_bKeepRunning = true;
+    m_nCount = 1;
+    m_lineA = chip.get_line(ENCODER_LINE_A); 
+    m_lineB = chip.get_line(ENCODER_LINE_B);
     m_lineA.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);  
     m_lineB.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);
 }
@@ -53,31 +53,46 @@ Encoder::~Encoder(){
     m_lineB.release();
 }
 int Encoder::start(){
+    m_bKeepRunning = true;
     thread m_tPoller(poller, this);
     m_tPoller.detach();
-    return 0;
+    return(0);
+}
+void Encoder::stop(){
+    m_bKeepRunning = false;
 }
 int Encoder::poller(Encoder* pEncoder){
-    while(1){
-        int nValA = pEncoder->m_lineA.get_value();
-        int nValB = pEncoder->m_lineB.get_value();
+    chrono::steady_clock::time_point timePt;
+    while(pEncoder->isKeepRunning()){
 
-        int nState =  pEncoder->getValA() << 4 | pEncoder->getValB() << 3 | nValA << 2 | nValB;
-        int nCount = states[nCount];
+        if(pEncoder->waitEdgeEvent(1ms)){
+            int nValA = pEncoder->m_lineA.get_value();
+            int nValB = pEncoder->m_lineB.get_value();
+            int nState =  pEncoder->getValA() << 3 | pEncoder->getValB() << 2 | nValA << 1 | nValB;
+            int nCount = states[nState];
 
-        pEncoder->lock();
-        pEncoder->add(nCount);
-        pEncoder->unlock();
-
-        pEncoder->setValA(nValA);
-        pEncoder->setValB(nValB);
+            pEncoder->lock();
+            pEncoder->add(nCount);
+            pEncoder->unlock();
+        
+            // Save current line states (will be the previous state on the next pass)
+            pEncoder->setValA(nValA);
+            pEncoder->setValB(nValB);
+        }
     }
     return 0;
 }
 int Encoder::getCount(){
     int nCount;
     lock();
-    nCount = getCount();
+    nCount = m_nCount;
     unlock();
     return nCount;
+}
+bool Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
+    bool eventA = m_lineA.event_wait(msTimeout);
+    if(eventA) return true;
+    bool eventB = m_lineB.event_wait(msTimeout);
+    if(eventB) return true;
+    return false;
 }

@@ -1,4 +1,5 @@
 #include "display.hpp"
+#include "encoder.hpp"
 #include <chrono>
 #include <iostream>
 #include "liftometer.hpp"
@@ -7,19 +8,20 @@
 #include <math.h>
 using namespace std;
 
+extern Encoder *pEncoder;
 extern timed_mutex mtxData;
 extern Imu* pImu;
 int nSampleSize;
 
 Display::Display(){
-    nSampleSize = 10;
+    nSampleSize = 100;
     m_nSlaveAddr = 0x40;
-    // _PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
+    m_bKeepRunning = true;
+    //_PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
-    int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, 476);
+    int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, PWM_FREQUENCY);
 }
 Display::~Display(){
-    pthread_cancel(m_tUpdater.native_handle());
     PCA9685_setAllPWM(m_nFd, m_nSlaveAddr, _PCA9685_MINVAL, _PCA9685_MINVAL);
 }
 
@@ -32,61 +34,72 @@ int Display::updater(Display* pDisplay){
 
     int nResult = 0;
     chrono::steady_clock::time_point timePt;
-    cout << "update display thread started" << endl;
-    while(1){
-        timePt = chrono::steady_clock::now() + chrono::milliseconds(500);    // 2 Hz indicator updates
+
+    while(pDisplay->isKeepRunning()){
+        timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
+        int nCount = pEncoder->getCount();
+        nSampleSize = (nCount < 1)? 1: nCount;
+
         mtxData.lock();   
         double dAccelX = pImu->getAverageAccelX(nSampleSize);
         double dAccelY = pImu->getAverageAccelY(nSampleSize);       
         double dRoll = pImu->getAverageRoll(nSampleSize);
         double dPitch = pImu->getAveragePitch(nSampleSize);
+        double dYawRateX = pImu->getAverageYawRateY(nSampleSize);
+        double dYawRateY = pImu->getAverageYawRateX(nSampleSize);
         mtxData.unlock();   
 
-        double dYawRate = atan2(pImu->getAverageYawRateY(nSampleSize), pImu->getAverageYawRateX(nSampleSize));
+        // IMU angle units are 1/16 of a degree
+        dRoll /= 16.0;
+        dPitch /= 16.0;
+        double dYawRate = atan2(dYawRateY, dYawRateX) / 16.0;
         double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
-        
-        /* Miuzei 9g servos: ******************************************************
-         *   0        90      120 +/- 10      mechanical (degrees)
-         *   900      1500    2100            high pulse width (uS)
-         *   450      750     1050            counts in the PCA2865 "on" register
-         * 
-         *   2100 uS period = 476.19 Hz frequency  
-         *   4096 counts per PWM cycle -> 31.5 to 37.24 counts per degree 
-         *     middle: 34 counts per degree
-         *   1 count is 2 uS       
-         **************************************************************************/     
 
-        // Acceleration
-        nOnVals[3] = 450 + dAccel * 100.0;      // TODO: scale for range
-        nOffVals[3] - 4095 - nOnVals[3];
+        imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);
+        imuAngleToPwm(dPitch,   &nOnVals[1], &nOffVals[1]);
+        imuAngleToPwm(dYawRate, &nOnVals[2], &nOffVals[2]);
+        imuAccelToPwm(dAccel, &nOnVals[3], &nOffVals[3]);
 
-        // Roll
-        nOnVals[0] = 450 + dRoll * 34.0;
-        nOffVals[0] - 4095 - nOnVals[0];
+        pDisplay->setPWMVals(nOnVals, nOffVals);
 
-        // Pitch
-        nOnVals[1] = 450 + dRoll * 34.0;
-        nOffVals[1] - 4095 - nOnVals[1];
+        printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+            nSampleSize, nOnVals[3], nOnVals[2], nOnVals[0], nOnVals[1]);
+        fflush(stdout); 
 
-        // Yaw
-        nOnVals[2] = 450 + dYawRate * 34.0;
-        nOffVals[2] - 4095 - nOnVals[2];
-
-        // pDisplay->setPWMVals(nOnVals, nOffVals);
-        printf("Average(%d): Accel: %lf roll: %lf pitch: %lf\r", nSampleSize, dAccel, dRoll / 16.0, dPitch / 16.0);
-        fflush(stdout);
-        
-         this_thread::sleep_until(timePt);
+        this_thread::sleep_until(timePt);
     }
     return nResult;
 }
 int Display::setPWMVals(unsigned int* nOnVals, unsigned int* nOffVals){
     return PCA9685_setPWMVals(m_nFd,m_nSlaveAddr,nOnVals, nOffVals);
 }
-int Display::start(){
-     thread m_tUpdater(updater, this);
-     m_tUpdater.detach();
-     return 0;
+void Display::start(){
+    m_bKeepRunning = true;
+    thread m_tUpdater(updater, this);
+    m_tUpdater.detach();
+}
+void Display::stop(){
+    m_bKeepRunning = false;  
 }
 
+void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
+    int nOn =  PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
+    if (nOn < PWM_MIN)
+        nOn = PWM_MIN;
+    else if(nOn > PWM_MAX)
+        nOn = PWM_MAX;
+    int nOff = PWM_FULL_COUNT - nOn;
+    *on = nOn;
+    *off = nOff;
+} 
+void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
+    int nOn =  PWM_ACCEL_OFFSET + (accel * PWM_ACCEL_SCALE);
+    if (nOn < PWM_MIN)
+        nOn = PWM_MIN;
+    else if(nOn > PWM_MAX)
+        nOn = PWM_MAX;
+    int nOff = PWM_FULL_COUNT - nOn;
+    *on = nOn;
+    *off = nOff;
+}

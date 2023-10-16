@@ -5,6 +5,9 @@
 #include<thread>
 #include <mutex>
 
+#define ENCODER_LINE_A (23)
+#define ENCODER_LINE_B (24)
+
  using namespace std;
 
 class Encoder{
@@ -12,6 +15,7 @@ class Encoder{
         Encoder();
         ~Encoder();
         int start();
+        void stop();
         static int poller(Encoder*); // Main thread
         inline void lock(){m_mtxData.lock();}
         inline void unlock(void){m_mtxData.unlock();}
@@ -21,7 +25,9 @@ class Encoder{
         inline int getValB(){return m_nValB;}
         inline void add(int n){m_nCount +=n;}
         int getCount();
+        inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
+        bool waitEdgeEvent(chrono::milliseconds msTimeout);
         int m_nCount;
         mutex m_mtxData;
         thread m_tPoller;
@@ -29,6 +35,7 @@ class Encoder{
         gpiod::line m_lineB;
         int m_nValA;
         int m_nValB;
+        bool m_bKeepRunning;
 };
 
 #endif
