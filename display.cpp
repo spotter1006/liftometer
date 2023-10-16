@@ -1,4 +1,5 @@
 #include "display.hpp"
+#include "encoder.hpp"
 #include <chrono>
 #include <iostream>
 #include "liftometer.hpp"
@@ -7,6 +8,7 @@
 #include <math.h>
 using namespace std;
 
+extern Encoder *pEncoder;
 extern timed_mutex mtxData;
 extern Imu* pImu;
 int nSampleSize;
@@ -36,6 +38,9 @@ int Display::updater(Display* pDisplay){
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
+        int nCount = pEncoder->getCount();
+        nSampleSize = (nCount < 1)? 1: nCount;
+
         mtxData.lock();   
         double dAccelX = pImu->getAverageAccelX(nSampleSize);
         double dAccelY = pImu->getAverageAccelY(nSampleSize);       
@@ -59,7 +64,7 @@ int Display::updater(Display* pDisplay){
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
         printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
-        nSampleSize, nOnVals[3], nOnVals[2], nOnVals[0], nOnVals[1]);
+            nSampleSize, nOnVals[3], nOnVals[2], nOnVals[0], nOnVals[1]);
         fflush(stdout); 
 
         this_thread::sleep_until(timePt);

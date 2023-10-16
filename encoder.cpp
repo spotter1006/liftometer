@@ -41,7 +41,7 @@ int states[16] = {0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
 
 Encoder::Encoder(){
     m_bKeepRunning = true;
-    m_nCount = 0;
+    m_nCount = 1;
     m_lineA = chip.get_line(ENCODER_LINE_A); 
     m_lineB = chip.get_line(ENCODER_LINE_B);
     m_lineA.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);  
@@ -65,26 +65,27 @@ int Encoder::poller(Encoder* pEncoder){
     chrono::steady_clock::time_point timePt;
     while(pEncoder->isKeepRunning()){
 
-        pEncoder->waitEdgeEvent(1ms);
-        int nValA = pEncoder->m_lineA.get_value();
-        int nValB = pEncoder->m_lineB.get_value();
-        int nState =  pEncoder->getValA() << 4 | pEncoder->getValB() << 3 | nValA << 2 | nValB;
-        int nCount = states[nState];
+        if(pEncoder->waitEdgeEvent(1ms)){
+            int nValA = pEncoder->m_lineA.get_value();
+            int nValB = pEncoder->m_lineB.get_value();
+            int nState =  pEncoder->getValA() << 3 | pEncoder->getValB() << 2 | nValA << 1 | nValB;
+            int nCount = states[nState];
 
-        pEncoder->lock();
-        pEncoder->add(nCount);
-        pEncoder->unlock();
-
-        // Save current line states (will be the previous state on the next pass)
-        pEncoder->setValA(nValA);
-        pEncoder->setValB(nValB);
+            pEncoder->lock();
+            pEncoder->add(nCount);
+            pEncoder->unlock();
+        
+            // Save current line states (will be the previous state on the next pass)
+            pEncoder->setValA(nValA);
+            pEncoder->setValB(nValB);
+        }
     }
     return 0;
 }
 int Encoder::getCount(){
     int nCount;
     lock();
-    nCount = getCount();
+    nCount = m_nCount;
     unlock();
     return nCount;
 }
