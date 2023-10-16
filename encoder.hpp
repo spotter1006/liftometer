@@ -23,11 +23,11 @@ class Encoder{
         inline void setValB(int nValB){m_nValB=nValB;}
         inline int getValA(){return m_nValA;}
         inline int getValB(){return m_nValB;}
-        inline void add(int n){m_nCount +=n;}
+        void add(int n);
         int getCount();
         inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
-        bool waitEdgeEvent(chrono::milliseconds msTimeout);
+        int waitEdgeEvent(chrono::milliseconds msTimeout);
         int m_nCount;
         mutex m_mtxData;
         thread m_tPoller;

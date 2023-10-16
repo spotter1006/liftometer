@@ -38,8 +38,7 @@ int Display::updater(Display* pDisplay){
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
-        int nCount = pEncoder->getCount();
-        nSampleSize = (nCount < 1)? 1: nCount;
+        nSampleSize = pEncoder->getCount();
 
         mtxData.lock();   
         double dAccelX = pImu->getAverageAccelX(nSampleSize);

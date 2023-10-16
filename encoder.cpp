@@ -1,4 +1,5 @@
 #include "encoder.hpp"
+
 extern gpiod::chip chip;
 /******************************************************************************
    Quadrature encoder makes two waveforms that are 90° out of phase:
@@ -44,8 +45,8 @@ Encoder::Encoder(){
     m_nCount = 1;
     m_lineA = chip.get_line(ENCODER_LINE_A); 
     m_lineB = chip.get_line(ENCODER_LINE_B);
-    m_lineA.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);  
-    m_lineB.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);
+    m_lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
+    m_lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
 }
 Encoder::~Encoder(){
     pthread_cancel(m_tPoller.native_handle());
@@ -60,12 +61,17 @@ int Encoder::start(){
 }
 void Encoder::stop(){
     m_bKeepRunning = false;
+    m_tPoller.join();
+}
+void Encoder::add(int n){
+    m_nCount += n;
+    if(m_nCount < 1) m_nCount =1;
 }
 int Encoder::poller(Encoder* pEncoder){
     chrono::steady_clock::time_point timePt;
     while(pEncoder->isKeepRunning()){
-
-        if(pEncoder->waitEdgeEvent(1ms)){
+        int nEvents = pEncoder->waitEdgeEvent(1ms);
+        if(nEvents > 0){
             int nValA = pEncoder->m_lineA.get_value();
             int nValB = pEncoder->m_lineB.get_value();
             int nState =  pEncoder->getValA() << 3 | pEncoder->getValB() << 2 | nValA << 1 | nValB;
@@ -89,10 +95,18 @@ int Encoder::getCount(){
     unlock();
     return nCount;
 }
-bool Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
-    bool eventA = m_lineA.event_wait(msTimeout);
-    if(eventA) return true;
-    bool eventB = m_lineB.event_wait(msTimeout);
-    if(eventB) return true;
-    return false;
+int Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
+    int ret = 0;
+    gpiod::line_event event;
+
+    if(m_lineA.event_wait(msTimeout)){
+        event = m_lineA.event_read();
+        ret++;
+    }
+    if( m_lineB.event_wait(msTimeout)){
+        event = m_lineB.event_read();
+        ret++;
+    }
+    
+    return ret;
 }
