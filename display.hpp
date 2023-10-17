@@ -5,21 +5,21 @@
 #include <thread>
 #include "imu.hpp"
 
-#define UPDATE_INTERVAL_MS (10)
+#define UPDATE_INTERVAL_MS (100)
 #define PWM_FULL_COUNT (4095)       // Count regiters are 12 bits in PCA 9685
-#define PWM_FREQUENCY (200)         // 5 mS
+#define PWM_FREQUENCY (333)         // 3 mS
 
-// 4095 PWM counts for 5 mS -> 819 counts per mS
-// 0.5 mS to 2.5 mS PWM pule width makes the servo go from 0 to 180 degrees
-// (1.5 mS * 819 counts/ms) / (90 degrees/ms) = 13.65 counts per degree
+// 4095 PWM counts for 3.333 mS -> 1365.3333 counts per mS
+// 0.5 mS to 2.5 mS PWM pule width makes the servo go from 0 to 180 degrees 
+// (2 mS * 1365.333 counts/ms) / (270 degrees/ms) = 10.11 counts per degree
 
-#define PWM_ANGLE_SCALE (13.65)    
-#define PWM_ANGLE_OFFSET (1024)
+#define PWM_ANGLE_SCALE (10.11)    
+#define PWM_ANGLE_OFFSET (2048)
 
-#define PWM_MIN (410)         
-#define PWM_MAX (2048) 
+#define PWM_MIN (683)         
+#define PWM_MAX (3413) 
 
-#define PWM_ACCEL_SCALE (100.0)         // Default, to be scaled dynamically
+#define PWM_ACCEL_SCALE (1000.0)         // Default, to be scaled dynamically
 #define PWM_ACCEL_OFFSET (PWM_MIN)
 
 class Display{
