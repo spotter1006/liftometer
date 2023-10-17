@@ -98,13 +98,15 @@ int Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
     int ret = 0;
     gpiod::line_event event;
 
-    if(m_lineA.event_wait(msTimeout)){
-        event = m_lineA.event_read();
-        ret++;
-    }
-    if( m_lineB.event_wait(msTimeout)){
-        event = m_lineB.event_read();
-        ret++;
+    if(m_bKeepRunning){
+        if(m_lineA.event_wait(msTimeout)){
+            event = m_lineA.event_read();
+            ret++;
+        }
+        if( m_lineB.event_wait(msTimeout)){
+            event = m_lineB.event_read();
+            ret++;
+        }
     }
     
     return ret;

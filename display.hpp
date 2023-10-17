@@ -11,15 +11,16 @@
 
 // 4095 PWM counts for 3.333 mS -> 1365.3333 counts per mS
 // 0.5 mS to 2.5 mS PWM pule width makes the servo go from 0 to 180 degrees 
-// (2 mS * 1365.333 counts/ms) / (270 degrees/ms) = 10.11 counts per degree
+// (2 mS * 1365.333 counts/ms) / 270 degrees/ms = 10.11 counts per degree
 
-#define PWM_ANGLE_SCALE (10.11)    
-#define PWM_ANGLE_OFFSET (2048)
+#define PWM_MIN (683)     // .5 mS
+#define PWM_MAX (3413)    // 2.5 mS
+#define PWM_MID ((PWM_MAX - PWM_MIN) / 2)   
 
-#define PWM_MIN (683)         
-#define PWM_MAX (3413) 
+#define PWM_ANGLE_SCALE (10.11)   
+#define PWM_ANGLE_OFFSET (PWM_MID)
 
-#define PWM_ACCEL_SCALE (1000.0)         // Default, to be scaled dynamically
+#define PWM_ACCEL_SCALE (10.0)         // Default, to be scaled dynamically
 #define PWM_ACCEL_OFFSET (PWM_MIN)
 
 class Display{
