@@ -12,6 +12,8 @@ extern Encoder *pEncoder;
 extern timed_mutex mtxData;
 extern Imu* pImu;
 int nSampleSize;
+unsigned int nOnVals[16];
+unsigned int nOffVals[16];
 
 Display::Display(){
     nSampleSize = 100;
@@ -26,8 +28,7 @@ Display::~Display(){
 }
 
 int Display::updater(Display* pDisplay){
-    unsigned int nOnVals[16];
-    unsigned int nOffVals[16];
+
 
     memset(nOnVals,0,16);
     memset(nOffVals,0,16);
@@ -62,8 +63,8 @@ int Display::updater(Display* pDisplay){
 
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
-        printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
-            nSampleSize, nOnVals[3], nOnVals[2], nOnVals[0], nOnVals[1]);
+        // printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+        //     nSampleSize, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         fflush(stdout); 
 
         this_thread::sleep_until(timePt);
@@ -83,22 +84,22 @@ void Display::stop(){
 }
 
 void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
-    int nOn =  PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
-    if (nOn < PWM_MIN)
-        nOn = PWM_MIN;
-    else if(nOn > PWM_MAX)
-        nOn = PWM_MAX;
-    int nOff = PWM_FULL_COUNT - nOn;
-    *on = nOn;
-    *off = nOff;
+    int nPulseWidth =  PWM_MIN + PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
+    if (nPulseWidth < PWM_MIN)
+        nPulseWidth = PWM_MIN;
+    else if(nPulseWidth > PWM_MAX)
+        nPulseWidth = PWM_MAX;
+
+    *on = 0;            // Phase shift = 0
+    *off = nPulseWidth - 1;
 } 
 void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
-    int nOn =  PWM_ACCEL_OFFSET + (accel * PWM_ACCEL_SCALE);
-    if (nOn < PWM_MIN)
-        nOn = PWM_MIN;
-    else if(nOn > PWM_MAX)
-        nOn = PWM_MAX;
-    int nOff = PWM_FULL_COUNT - nOn;
-    *on = nOn;
-    *off = nOff;
+    int nPulseWidth =  PWM_MIN + (accel * PWM_ACCEL_SCALE);
+    if (nPulseWidth < PWM_MIN)
+        nPulseWidth = PWM_MIN;
+    else if(nPulseWidth > PWM_MAX)
+        nPulseWidth = PWM_MAX;
+
+    *on = 0;        // Phase shift = 0
+    *off = nPulseWidth -1;
 }

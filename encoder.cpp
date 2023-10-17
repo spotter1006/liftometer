@@ -49,7 +49,6 @@ Encoder::Encoder(){
     m_lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
 }
 Encoder::~Encoder(){
-    pthread_cancel(m_tPoller.native_handle());
     m_lineA.release();
     m_lineB.release();
 }
@@ -61,7 +60,6 @@ int Encoder::start(){
 }
 void Encoder::stop(){
     m_bKeepRunning = false;
-    m_tPoller.join();
 }
 void Encoder::add(int n){
     m_nCount += n;
@@ -86,6 +84,7 @@ int Encoder::poller(Encoder* pEncoder){
             pEncoder->setValB(nValB);
         }
     }
+
     return 0;
 }
 int Encoder::getCount(){

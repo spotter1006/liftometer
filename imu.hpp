@@ -6,6 +6,8 @@
 #include <limits>
 #include <thread>
 #include <mutex>
+
+#define SAMPLE_RATE_MS (200)
 using namespace std;
 
 
