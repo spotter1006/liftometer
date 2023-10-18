@@ -114,6 +114,10 @@ int Imu::imuPoller(Imu* pImu){
     }
     return 0;
 }
+double Imu::getAccelRange(int nSamles){
+    return 0.0;
+
+}
 double Imu::getAverageAccelX(int nSamples){
     return m_pAccelX->calc( nSamples);
 }

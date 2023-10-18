@@ -42,6 +42,7 @@ int Display::updater(Display* pDisplay){
         nSampleSize = pEncoder->getCount();
 
         mtxData.lock();   
+        double dAccelRange = pImu->getAccelRange(nSampleSize);
         double dAccelX = pImu->getAverageAccelX(nSampleSize);
         double dAccelY = pImu->getAverageAccelY(nSampleSize);       
         double dRoll = pImu->getAverageRoll(nSampleSize);
@@ -53,7 +54,8 @@ int Display::updater(Display* pDisplay){
         // IMU angle units are 1/16 of a degree
         dRoll /= 16.0;
         dPitch /= 16.0;
-        double dYawRate = atan2(dYawRateY, dYawRateX) / 16.0;
+        
+        double dYawRate = atan2(dYawRateY, dYawRateX) * 180.0 / M_PI;
         double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
 
         imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);

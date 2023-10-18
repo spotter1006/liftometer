@@ -7,6 +7,7 @@
 
 #define ENCODER_LINE_A (23)
 #define ENCODER_LINE_B (24)
+#define SWITCH_LINE (25)
 
  using namespace std;
 
@@ -33,6 +34,7 @@ class Encoder{
         thread m_tPoller;
         gpiod::line m_lineA;
         gpiod::line m_lineB;
+        gpiod::line m_lineSwitch;
         int m_nValA;
         int m_nValB;
         bool m_bKeepRunning;

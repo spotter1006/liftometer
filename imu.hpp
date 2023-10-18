@@ -20,6 +20,7 @@ class Imu{
         void stop();
         double getAverageRoll(int nSamples);
         double getAveragePitch(int nSamples);
+        double getAccelRange(int nSamles);
         double getAverageAccelX(int nSamples);
         double getAverageAccelY(int nSamples);
         double getAverageYawRateX(int nSamples);
