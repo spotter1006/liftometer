@@ -24,6 +24,7 @@ class Encoder{
         inline void setValB(int nValB){m_nValB=nValB;}
         inline int getValA(){return m_nValA;}
         inline int getValB(){return m_nValB;}
+        inline int getSwitchVal(){return m_nSwitchVal;}
         void add(int n);
         int getCount();
         inline bool isKeepRunning(){return m_bKeepRunning;}
@@ -37,6 +38,7 @@ class Encoder{
         gpiod::line m_lineSwitch;
         int m_nValA;
         int m_nValB;
+        int m_nSwitchVal;
         bool m_bKeepRunning;
 };
 

@@ -58,8 +58,9 @@ int main(){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
             bno055_set_sys_rst(1);
         }else if(line.compare("") == 0){
+            int nSamples = (pEncoder->getSwitchVal() == 0)? 1:nSampleSize;
             printf("\033[A\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
-            nSampleSize, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
+            nSamples, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         }
         this_thread::sleep_until(timePt);
     }

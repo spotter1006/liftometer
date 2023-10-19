@@ -44,13 +44,14 @@ Encoder::Encoder(){
     m_bKeepRunning = true;
     m_nValA = 0;
     m_nValB = 0;
+    m_nSwitchVal =1;
     m_nCount = 1;
     m_lineA = chip.get_line(ENCODER_LINE_A); 
     m_lineB = chip.get_line(ENCODER_LINE_B);
     m_lineSwitch = chip.get_line(SWITCH_LINE);
     m_lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
     m_lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
-    m_lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
+    m_lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);
 }
 Encoder::~Encoder(){
     m_lineA.release();
@@ -113,8 +114,10 @@ int Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
         }
         if(m_lineSwitch.event_wait(msTimeout)){
             event = m_lineSwitch.event_read();
-            ret++;
+            if(event.event_type == GPIOD_LINE_EVENT_RISING_EDGE) m_nSwitchVal = 1;
+            else if(event.event_type == GPIOD_LINE_EVENT_FALLING_EDGE) m_nSwitchVal = 0;
         }
     }
+    // gpiod::edge_event_buffer buff; // TODO, get a series of events to debounce switch
     return ret;
 }

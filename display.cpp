@@ -40,15 +40,15 @@ int Display::updater(Display* pDisplay){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
         nSampleSize = pEncoder->getCount();
-
+        int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;  // Just latest measurements if switch depressed
         mtxData.lock();   
-        double dAccelRange = pImu->getAccelRange(nSampleSize);
-        double dAccelX = pImu->getAverageAccelX(nSampleSize);
-        double dAccelY = pImu->getAverageAccelY(nSampleSize);       
-        double dRoll = pImu->getAverageRoll(nSampleSize);
-        double dPitch = pImu->getAveragePitch(nSampleSize);
-        double dYawRateX = pImu->getAverageYawRateY(nSampleSize);
-        double dYawRateY = pImu->getAverageYawRateX(nSampleSize);
+        double dAccelRange = pImu->getAccelRange(nSamples);
+        double dAccelX = pImu->getAverageAccelX(nSamples);
+        double dAccelY = pImu->getAverageAccelY(nSamples);       
+        double dRoll = pImu->getAverageRoll(nSamples);
+        double dPitch = pImu->getAveragePitch(nSamples);
+        double dYawRateX = pImu->getAverageYawRateY(nSamples);
+        double dYawRateY = pImu->getAverageYawRateX(nSamples);
         mtxData.unlock();   
 
         // IMU angle units are 1/16 of a degree
