@@ -46,16 +46,10 @@ Encoder::Encoder(){
     m_nValB = 0;
     m_nSwitchVal =1;
     m_nCount = 1;
-    m_lineA = chip.get_line(ENCODER_LINE_A); 
-    m_lineB = chip.get_line(ENCODER_LINE_B);
-    m_lineSwitch = chip.get_line(SWITCH_LINE);
-    m_lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
-    m_lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
-    m_lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);
+   
 }
 Encoder::~Encoder(){
-    m_lineA.release();
-    m_lineB.release();
+ 
 }
 int Encoder::start(){
     m_bKeepRunning = true;
@@ -72,11 +66,32 @@ void Encoder::add(int n){
 }
 int Encoder::poller(Encoder* pEncoder){
     chrono::steady_clock::time_point timePt;
+    gpiod::line lineA = chip.get_line(ENCODER_LINE_A); 
+    gpiod::line lineB = chip.get_line(ENCODER_LINE_B);
+    gpiod::line lineSwitch = chip.get_line(SWITCH_LINE);
+    lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
+    lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
+    lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);
     while(pEncoder->isKeepRunning()){
-        int nEvents = pEncoder->waitEdgeEvent(1ms);
+        gpiod::line_event event;
+        int nEvents = 0;
+        
+        if(lineA.event_wait(1ms)){
+            event = lineA.event_read();
+            nEvents++;
+        }
+        if( lineB.event_wait(1ms)){
+            event = lineB.event_read();
+            nEvents++;
+        }
+        if(lineSwitch.event_wait(1ms)){
+            event = lineSwitch.event_read();
+            pEncoder->setSwitchVal(lineSwitch.get_value());
+        }
+    
         if(nEvents > 0){
-            int nValA = pEncoder->m_lineA.get_value();
-            int nValB = pEncoder->m_lineB.get_value();
+            int nValA = lineA.get_value();
+            int nValB = lineB.get_value();
             int nState =  pEncoder->getValA() << 3 | pEncoder->getValB() << 2 | nValA << 1 | nValB;
             int nCount = states[nState];
 
@@ -89,7 +104,8 @@ int Encoder::poller(Encoder* pEncoder){
             pEncoder->setValB(nValB);
         }
     }
-
+   lineA.release();
+    lineB.release();
     return 0;
 }
 int Encoder::getCount(){
@@ -98,26 +114,4 @@ int Encoder::getCount(){
     nCount = m_nCount;
     unlock();
     return nCount;
-}
-int Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
-    int ret = 0;
-    gpiod::line_event event;
-
-    if(m_bKeepRunning){
-        if(m_lineA.event_wait(msTimeout)){
-            event = m_lineA.event_read();
-            ret++;
-        }
-        if( m_lineB.event_wait(msTimeout)){
-            event = m_lineB.event_read();
-            ret++;
-        }
-        if(m_lineSwitch.event_wait(msTimeout)){
-            event = m_lineSwitch.event_read();
-            if(event.event_type == GPIOD_LINE_EVENT_RISING_EDGE) m_nSwitchVal = 1;
-            else if(event.event_type == GPIOD_LINE_EVENT_FALLING_EDGE) m_nSwitchVal = 0;
-        }
-    }
-    // gpiod::edge_event_buffer buff; // TODO, get a series of events to debounce switch
-    return ret;
 }
