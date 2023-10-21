@@ -6,8 +6,7 @@ C and C++ project for the  sailing device, "liftometer".
 - Uses 4 of 16 MakerFocus PWM servo drivers conncted to the Raspberry Pi IO headers
 - A simple user shell is accessible through the standard console
 ## Dependencies
-  sudo apt install gpiod
-  libgpiod-dev
+  sudo apt install gpiod libgpiod-dev
 
 
 - Runs on any linux target
