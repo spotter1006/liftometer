@@ -16,9 +16,7 @@ C and C++ project for the  sailing device, "liftometer".
 - Uses MakerFocus PWM servo drivers for for the indicators
 - Uses a rotary encoder connected to GPIO n,m. Pusbutton connected to GPIOx
 - A simple user shell is accessible through the standard console
-## Dependencies
-sudo apt install gpiod
-sudo apt install libgpiod-dev
+
 ## Build
 This commandline is for a debug build comatible with GDB and VSCode:
 
