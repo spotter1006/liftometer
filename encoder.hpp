@@ -14,10 +14,9 @@
 class Encoder{
     public:
         Encoder();
-        ~Encoder();
         int start();
         void stop();
-        static int poller(Encoder*); // Main thread
+        static void poller(Encoder*); // Main thread
         inline void lock(){m_mtxData.lock();}
         inline void unlock(void){m_mtxData.unlock();}
         inline void setValA(int nValA){m_nValA=nValA;}
@@ -32,7 +31,6 @@ class Encoder{
     private:
         int m_nCount;
         mutex m_mtxData;
-        thread m_tPoller;
         int m_nValA;
         int m_nValB;
         int m_nSwitchVal;

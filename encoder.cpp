@@ -46,15 +46,12 @@ Encoder::Encoder(){
     m_nValB = 0;
     m_nSwitchVal =1;
     m_nCount = 1;
-   
 }
-Encoder::~Encoder(){
- 
-}
+
 int Encoder::start(){
     m_bKeepRunning = true;
-    thread m_tPoller(poller, this);
-    m_tPoller.detach();
+    std::thread t1(poller, this);
+    t1.detach();
     return(0);
 }
 void Encoder::stop(){
@@ -64,7 +61,7 @@ void Encoder::add(int n){
     m_nCount += n;
     if(m_nCount < 1) m_nCount =1;
 }
-int Encoder::poller(Encoder* pEncoder){
+void Encoder::poller(Encoder* pEncoder){
     gpiod::line lineA = chip.get_line(ENCODER_LINE_A); 
     gpiod::line lineB = chip.get_line(ENCODER_LINE_B);
     gpiod::line lineSwitch = chip.get_line(SWITCH_LINE);
@@ -109,7 +106,7 @@ int Encoder::poller(Encoder* pEncoder){
     }
     lineA.release();
     lineB.release();
-    return 0;
+    lineSwitch.release();
 }
 int Encoder::getCount(){
     int nCount;
