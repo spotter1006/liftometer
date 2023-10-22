@@ -7,7 +7,7 @@ class Average{
         ~Average();
         inline double size(){return m_dData.size();} 
         double calc(int);
-        void resize(int);
+        double range(int);
         void reset(void);
         void add(int);
         void print(void);

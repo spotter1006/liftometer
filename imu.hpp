@@ -6,6 +6,8 @@
 #include <limits>
 #include <thread>
 #include <mutex>
+
+#define SAMPLE_RATE_MS (200)
 using namespace std;
 
 
@@ -18,6 +20,7 @@ class Imu{
         void stop();
         double getAverageRoll(int nSamples);
         double getAveragePitch(int nSamples);
+        double getAccelRange(int nSamles);
         double getAverageAccelX(int nSamples);
         double getAverageAccelY(int nSamples);
         double getAverageYawRateX(int nSamples);

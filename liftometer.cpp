@@ -15,7 +15,9 @@ gpiod::chip chip("gpiochip0");
 Imu* pImu;
 Display *pDisplay;
 Encoder *pEncoder;
-extern int nSampleSize;     // TODO: demote this to the display class
+extern int nSampleSize;     
+extern unsigned int nOnVals[16];
+extern unsigned int nOffVals[16];
 
 void sigHandler(int signum){
     flagKeepRunning.clear();
@@ -50,14 +52,15 @@ int main(){
             cout << "Liftometer commands:" << endl;
             cout << "h - diplay this help message" << endl;
             cout << "r - reset the BNO055" << endl;
-            cout << "s<integer> - set th number of samples to use for the averages" << endl;
             cout << "q - quit liftometer" << endl;
+            cout << "Enter to show data" << endl;
         }else if(line.compare("r") == 0){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
             bno055_set_sys_rst(1);
-        }else if(line.find("s") == 0){
-            nSampleSize = stoi(line.substr(1));
-            cout << "Set the number of sample to average over to " << nSampleSize << endl;
+        }else if(line.compare("") == 0){
+            int nSamples = (pEncoder->getSwitchVal() == 0)? 1:nSampleSize;
+            printf("\033[A\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+            nSamples, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         }
         this_thread::sleep_until(timePt);
     }

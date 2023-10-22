@@ -12,6 +12,8 @@ extern Encoder *pEncoder;
 extern timed_mutex mtxData;
 extern Imu* pImu;
 int nSampleSize;
+unsigned int nOnVals[16];
+unsigned int nOffVals[16];
 
 Display::Display(){
     nSampleSize = 100;
@@ -26,8 +28,7 @@ Display::~Display(){
 }
 
 int Display::updater(Display* pDisplay){
-    unsigned int nOnVals[16];
-    unsigned int nOffVals[16];
+
 
     memset(nOnVals,0,16);
     memset(nOffVals,0,16);
@@ -38,22 +39,23 @@ int Display::updater(Display* pDisplay){
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
-        int nCount = pEncoder->getCount();
-        nSampleSize = (nCount < 1)? 1: nCount;
-
+        nSampleSize = pEncoder->getCount();
+        int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;  // Just latest measurements if switch depressed
         mtxData.lock();   
-        double dAccelX = pImu->getAverageAccelX(nSampleSize);
-        double dAccelY = pImu->getAverageAccelY(nSampleSize);       
-        double dRoll = pImu->getAverageRoll(nSampleSize);
-        double dPitch = pImu->getAveragePitch(nSampleSize);
-        double dYawRateX = pImu->getAverageYawRateY(nSampleSize);
-        double dYawRateY = pImu->getAverageYawRateX(nSampleSize);
+        double dAccelRange = pImu->getAccelRange(nSamples);
+        double dAccelX = pImu->getAverageAccelX(nSamples);
+        double dAccelY = pImu->getAverageAccelY(nSamples);       
+        double dRoll = pImu->getAverageRoll(nSamples);
+        double dPitch = pImu->getAveragePitch(nSamples);
+        double dYawRateX = pImu->getAverageYawRateY(nSamples);
+        double dYawRateY = pImu->getAverageYawRateX(nSamples);
         mtxData.unlock();   
 
         // IMU angle units are 1/16 of a degree
         dRoll /= 16.0;
         dPitch /= 16.0;
-        double dYawRate = atan2(dYawRateY, dYawRateX) / 16.0;
+        
+        double dYawRate = atan2(dYawRateY, dYawRateX) * 180.0 / M_PI;
         double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
 
         imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);
@@ -63,8 +65,8 @@ int Display::updater(Display* pDisplay){
 
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
-        printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
-            nSampleSize, nOnVals[3], nOnVals[2], nOnVals[0], nOnVals[1]);
+        // printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+        //     nSampleSize, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         fflush(stdout); 
 
         this_thread::sleep_until(timePt);
@@ -84,22 +86,22 @@ void Display::stop(){
 }
 
 void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
-    int nOn =  PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
-    if (nOn < PWM_MIN)
-        nOn = PWM_MIN;
-    else if(nOn > PWM_MAX)
-        nOn = PWM_MAX;
-    int nOff = PWM_FULL_COUNT - nOn;
-    *on = nOn;
-    *off = nOff;
+    int nPulseWidth =  PWM_MIN + PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
+    if (nPulseWidth < PWM_MIN)
+        nPulseWidth = PWM_MIN;
+    else if(nPulseWidth > PWM_MAX)
+        nPulseWidth = PWM_MAX;
+
+    *on = 0;            // Phase shift = 0
+    *off = nPulseWidth - 1;
 } 
 void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
-    int nOn =  PWM_ACCEL_OFFSET + (accel * PWM_ACCEL_SCALE);
-    if (nOn < PWM_MIN)
-        nOn = PWM_MIN;
-    else if(nOn > PWM_MAX)
-        nOn = PWM_MAX;
-    int nOff = PWM_FULL_COUNT - nOn;
-    *on = nOn;
-    *off = nOff;
+    int nPulseWidth =  PWM_MIN + (accel * PWM_ACCEL_SCALE);
+    if (nPulseWidth < PWM_MIN)
+        nPulseWidth = PWM_MIN;
+    else if(nPulseWidth > PWM_MAX)
+        nPulseWidth = PWM_MAX;
+
+    *on = 0;        // Phase shift = 0
+    *off = nPulseWidth -1;
 }

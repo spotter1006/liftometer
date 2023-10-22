@@ -45,3 +45,20 @@ void Average::print(void){
     for_each(m_dData.begin(), m_dData.end(), print);
     cout << endl;
 }
+double Average::range(int nSamples){
+    int nCount;
+    list<int>::iterator it;
+    if(nSamples <= m_dData.size()){
+        it = m_dData.begin();
+        advance(it, nSamples);
+        nCount = nSamples;
+    }else{
+        it = m_dData.end();
+        nCount = m_dData.size();
+    }
+    list<int>::iterator max = max_element(m_dData.begin(), it);
+    list<int>::iterator min = min_element(m_dData.begin(), it);
+    double dResult = abs(*max - *min);
+
+    return dResult;
+}

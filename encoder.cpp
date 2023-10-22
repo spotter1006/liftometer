@@ -1,4 +1,5 @@
 #include "encoder.hpp"
+
 extern gpiod::chip chip;
 /******************************************************************************
    Quadrature encoder makes two waveforms that are 90° out of phase:
@@ -41,16 +42,14 @@ int states[16] = {0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
 
 Encoder::Encoder(){
     m_bKeepRunning = true;
+    m_nValA = 0;
+    m_nValB = 0;
+    m_nSwitchVal =1;
     m_nCount = 1;
-    m_lineA = chip.get_line(ENCODER_LINE_A); 
-    m_lineB = chip.get_line(ENCODER_LINE_B);
-    m_lineA.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);  
-    m_lineB.request({"liftometer", gpiod::line_request::DIRECTION_INPUT, 0},0);
+   
 }
 Encoder::~Encoder(){
-    pthread_cancel(m_tPoller.native_handle());
-    m_lineA.release();
-    m_lineB.release();
+ 
 }
 int Encoder::start(){
     m_bKeepRunning = true;
@@ -61,13 +60,41 @@ int Encoder::start(){
 void Encoder::stop(){
     m_bKeepRunning = false;
 }
+void Encoder::add(int n){
+    m_nCount += n;
+    if(m_nCount < 1) m_nCount =1;
+}
 int Encoder::poller(Encoder* pEncoder){
-    chrono::steady_clock::time_point timePt;
+    gpiod::line lineA = chip.get_line(ENCODER_LINE_A); 
+    gpiod::line lineB = chip.get_line(ENCODER_LINE_B);
+    gpiod::line lineSwitch = chip.get_line(SWITCH_LINE);
+    lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
+    lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
+    lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);
+    gpiod::line_event event;
+    auto timeout = chrono::milliseconds(10);
+    vector<gpiod::line> lines = {lineA, lineB, lineSwitch};
+    gpiod::line_bulk lineBulk = gpiod::line_bulk(lines);
     while(pEncoder->isKeepRunning()){
-
-        if(pEncoder->waitEdgeEvent(1ms)){
-            int nValA = pEncoder->m_lineA.get_value();
-            int nValB = pEncoder->m_lineB.get_value();
+        int nEvents = 0;     
+        gpiod::line_bulk eventLines = lineBulk.event_wait(timeout);
+        for(gpiod::line line : eventLines){
+            if(lineA == line){
+                event = lineA.event_read();
+                nEvents++;
+            }
+            if( lineB == line){
+                event = lineB.event_read();
+                nEvents++;
+            }
+            if(lineSwitch == line){
+                event = lineSwitch.event_read();
+                pEncoder->setSwitchVal(lineSwitch.get_value());
+            }
+        }
+        if(nEvents > 0){
+            int nValA = lineA.get_value();
+            int nValB = lineB.get_value();
             int nState =  pEncoder->getValA() << 3 | pEncoder->getValB() << 2 | nValA << 1 | nValB;
             int nCount = states[nState];
 
@@ -80,6 +107,8 @@ int Encoder::poller(Encoder* pEncoder){
             pEncoder->setValB(nValB);
         }
     }
+    lineA.release();
+    lineB.release();
     return 0;
 }
 int Encoder::getCount(){
@@ -88,11 +117,4 @@ int Encoder::getCount(){
     nCount = m_nCount;
     unlock();
     return nCount;
-}
-bool Encoder:: waitEdgeEvent(chrono::milliseconds msTimeout){
-    bool eventA = m_lineA.event_wait(msTimeout);
-    if(eventA) return true;
-    bool eventB = m_lineB.event_wait(msTimeout);
-    if(eventB) return true;
-    return false;
 }

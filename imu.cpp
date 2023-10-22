@@ -95,7 +95,7 @@ int Imu::imuPoller(Imu* pImu){
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(10);      // 100 hz
+            chrono::steady_clock::now() + chrono::milliseconds(SAMPLE_RATE_MS);  
         
         mtxData.lock();
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
@@ -113,6 +113,10 @@ int Imu::imuPoller(Imu* pImu){
         this_thread::sleep_until(timePt);
     }
     return 0;
+}
+double Imu::getAccelRange(int nSamles){
+    return 0.0;
+
 }
 double Imu::getAverageAccelX(int nSamples){
     return m_pAccelX->calc( nSamples);
