@@ -65,30 +65,33 @@ void Encoder::add(int n){
     if(m_nCount < 1) m_nCount =1;
 }
 int Encoder::poller(Encoder* pEncoder){
-    chrono::steady_clock::time_point timePt;
     gpiod::line lineA = chip.get_line(ENCODER_LINE_A); 
     gpiod::line lineB = chip.get_line(ENCODER_LINE_B);
     gpiod::line lineSwitch = chip.get_line(SWITCH_LINE);
     lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
     lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
     lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);
+    gpiod::line_event event;
+    auto timeout = chrono::milliseconds(10);
+    vector<gpiod::line> lines = {lineA, lineB, lineSwitch};
+    gpiod::line_bulk lineBulk = gpiod::line_bulk(lines);
     while(pEncoder->isKeepRunning()){
-        gpiod::line_event event;
-        int nEvents = 0;
-        
-        if(lineA.event_wait(1ms)){
-            event = lineA.event_read();
-            nEvents++;
+        int nEvents = 0;     
+        gpiod::line_bulk eventLines = lineBulk.event_wait(timeout);
+        for(gpiod::line line : eventLines){
+            if(lineA == line){
+                event = lineA.event_read();
+                nEvents++;
+            }
+            if( lineB == line){
+                event = lineB.event_read();
+                nEvents++;
+            }
+            if(lineSwitch == line){
+                event = lineSwitch.event_read();
+                pEncoder->setSwitchVal(lineSwitch.get_value());
+            }
         }
-        if( lineB.event_wait(1ms)){
-            event = lineB.event_read();
-            nEvents++;
-        }
-        if(lineSwitch.event_wait(1ms)){
-            event = lineSwitch.event_read();
-            pEncoder->setSwitchVal(lineSwitch.get_value());
-        }
-    
         if(nEvents > 0){
             int nValA = lineA.get_value();
             int nValB = lineB.get_value();
@@ -104,7 +107,7 @@ int Encoder::poller(Encoder* pEncoder){
             pEncoder->setValB(nValB);
         }
     }
-   lineA.release();
+    lineA.release();
     lineB.release();
     return 0;
 }
