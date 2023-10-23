@@ -15,7 +15,7 @@ class Imu{
     public:
         Imu(int);
         ~Imu();
-        static int imuPoller(Imu*); // Main thread
+        static void imuPoller(Imu*); // Main thread
         int start();
         void stop();
         double getAverageRoll(int nSamples);
@@ -37,7 +37,6 @@ class Imu{
         Average* m_pAccelX;
         Average* m_pAccelY;
         timed_mutex m_mtxData;
-        std::thread m_tPoller;
         bool m_bKeepRunning;
 };
 #endif

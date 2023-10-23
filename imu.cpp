@@ -68,14 +68,14 @@ int Imu::start(){
         cout << "Failed to set BNO05 NDOF mode. " << endl;
     }
 
-    thread m_tPoller(imuPoller, this);  
-    m_tPoller.detach();
+    thread t1(imuPoller, this);  
+    t1.detach();
     return nRet;
 }
 void Imu::stop(){
     m_bKeepRunning = false;
 }
-int Imu::imuPoller(Imu* pImu){
+void Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
     int nPingPong = 0;
     int result;
@@ -86,12 +86,12 @@ int Imu::imuPoller(Imu* pImu){
     this_thread::sleep_for(chrono::milliseconds(20));
     if(result != 0){
         cout << "Failed to set operation mode mode. IMU poller thread exiting." << endl;
-        return -1;
+        return;
     }
+    bno055_gyro_t gyro;   
+    bno055_euler_t hrp; // heading, roll, pitch
+    bno055_linear_accel_t accel;    // Linear acceleration (gravity removed)
     while(pImu->isKeepRunning()){   
-        bno055_gyro_t gyro;   
-        bno055_euler_t hrp; // heading, roll, pitch
-        bno055_linear_accel_t accel;    // Linear acceleration (gravity removed)
 
         // Calculate interval for the next wake up
         chrono::_V2::steady_clock::time_point timePt = 
@@ -112,7 +112,6 @@ int Imu::imuPoller(Imu* pImu){
  
         this_thread::sleep_until(timePt);
     }
-    return 0;
 }
 double Imu::getAccelRange(int nSamles){
     return 0.0;
