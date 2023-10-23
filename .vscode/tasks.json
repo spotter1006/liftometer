@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
-			"label": "C/C++: g++ build",
+			"label": "debug build",
 			"command": "/usr/bin/g++",
 			"args": [
 				// "-Wl,--verbose ",
@@ -16,6 +16,29 @@
 				"${workspaceFolder}/*.c*",
 				"-o",
 				"${fileDirname}/build/debug/liftometer",
+				"-lgpiodcxx"		// This has to be after the object file creation step or symbols are not found
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /usr/bin/g++-9"
+		},
+		{
+			"type": "cppbuild",
+			"label": "release build",
+			"command": "/usr/bin/g++",
+			"args": [
+				"-pthread",
+				"${workspaceFolder}/*.c*",
+				"-o",
+				"${fileDirname}/build/release/liftometer",
 				"-lgpiodcxx"		// This has to be after the object file creation step or symbols are not found
 			],
 			"options": {
