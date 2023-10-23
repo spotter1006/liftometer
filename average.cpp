@@ -27,13 +27,14 @@ double Average::calc(int nSamples){
     int nCount;
     list<int> result;
     list<int>::iterator it;
-    if(nSamples <= m_dData.size()){
+    int nSize =  m_dData.size();
+    if(nSamples <= nSize){
         it = m_dData.begin();
         advance(it, nSamples);
         nCount = nSamples;
     }else{
         it = m_dData.end();
-        nCount = m_dData.size();
+        nCount = nSize;
     }
     partial_sum(m_dData.begin(), it, result.begin());
 

@@ -8,36 +8,41 @@
 #include <mutex>
 
 #define SAMPLE_RATE_MS (200)
+#define DATA_SIZE 20000000
 using namespace std;
 
-
+typedef struct IMU_DATA{
+    short roll;
+    short pitch;
+    short yawRateX;
+    short yawRateY;
+    short accX;
+    short accY;
+}ImuData;
+typedef struct IMU_AVERAGED_DATA{
+    double roll;
+    double pitch;
+    double yawRateX;
+    double yawRateY;
+    double accX;
+    double accY;
+}ImuAveragedData;
 class Imu{
     public:
         Imu(int);
         ~Imu();
-        static int imuPoller(Imu*); // Main thread
+        void add(ImuData dataPoint);
+        static void imuPoller(Imu*); // Main thread
         int start();
         void stop();
-        double getAverageRoll(int nSamples);
-        double getAveragePitch(int nSamples);
-        double getAccelRange(int nSamles);
-        double getAverageAccelX(int nSamples);
-        double getAverageAccelY(int nSamples);
-        double getAverageYawRateX(int nSamples);
-        double getAverageYawRateY(int nSamples);
+        ImuAveragedData getAveragedData(int nSamples);
         inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
         inline void unlock(void){m_mtxData.unlock();}
         inline bool isKeepRunning(){return m_bKeepRunning;}
     private:        
         int m_nBufferSize;
-        Average* m_pRoll;
-        Average* m_pPitch;
-        Average* m_pYawRateX;
-        Average* m_pYawRateY;
-        Average* m_pAccelX;
-        Average* m_pAccelY;
         timed_mutex m_mtxData;
-        std::thread m_tPoller;
         bool m_bKeepRunning;
+        list<ImuData> *m_pData;
 };
 #endif
