@@ -28,38 +28,30 @@ Display::~Display(){
 }
 
 int Display::updater(Display* pDisplay){
-
-
     memset(nOnVals,0,16);
     memset(nOffVals,0,16);
 
     int nResult = 0;
     chrono::steady_clock::time_point timePt;
-
+    ImuAveragedData averages;
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         
         nSampleSize = pEncoder->getCount();
         int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;  // Just latest measurements if switch depressed
         mtxData.lock();   
-        double dAccelRange = pImu->getAccelRange(nSamples);
-        double dAccelX = pImu->getAverageAccelX(nSamples);
-        double dAccelY = pImu->getAverageAccelY(nSamples);       
-        double dRoll = pImu->getAverageRoll(nSamples);
-        double dPitch = pImu->getAveragePitch(nSamples);
-        double dYawRateX = pImu->getAverageYawRateY(nSamples);
-        double dYawRateY = pImu->getAverageYawRateX(nSamples);
-        mtxData.unlock();   
-
-        // IMU angle units are 1/16 of a degree
-        dRoll /= 16.0;
-        dPitch /= 16.0;
+        averages = pImu->getAveragedData(nSamples);
+        mtxData.unlock();
         
-        double dYawRate = atan2(dYawRateY, dYawRateX) * 180.0 / M_PI;
-        double dAccel = sqrt((double(dAccelX * dAccelX) + (double)(dAccelY * dAccelY))); 
+        // IMU angle units are 1/16 of a degree
+        averages.roll /= 16.0;
+        averages.pitch /= 16.0;
+        
+        double dYawRate = atan2(averages.yawRateY, averages.yawRateX) * 180.0 / M_PI;
+        double dAccel = sqrt(averages.accX * averages.accX + averages.accY * averages.accY); 
 
-        imuAngleToPwm(dRoll,    &nOnVals[0], &nOffVals[0]);
-        imuAngleToPwm(dPitch,   &nOnVals[1], &nOffVals[1]);
+        imuAngleToPwm(averages.roll,    &nOnVals[0], &nOffVals[0]);
+        imuAngleToPwm(averages.pitch,   &nOnVals[1], &nOffVals[1]);
         imuAngleToPwm(dYawRate, &nOnVals[2], &nOffVals[2]);
         imuAccelToPwm(dAccel, &nOnVals[3], &nOffVals[3]);
 

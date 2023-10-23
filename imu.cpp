@@ -18,22 +18,18 @@ timed_mutex mtxData;
 Imu::Imu(int nBufferSize){
     m_bKeepRunning = true;
     m_nBufferSize =nBufferSize;
-    m_pRoll = new Average(m_nBufferSize);
-    m_pPitch = new Average(m_nBufferSize);
-    m_pYawRateX = new Average(m_nBufferSize);
-    m_pYawRateY = new Average(m_nBufferSize);
-    m_pAccelX = new Average(m_nBufferSize);
-    m_pAccelY = new Average(m_nBufferSize);
+    m_pData = new list<ImuData>();
 }
 Imu::~Imu(){
-    delete m_pRoll;
-    delete m_pPitch;
-    delete m_pYawRateX;
-    delete m_pYawRateY;
-    delete m_pAccelX;
-    delete m_pAccelY;
+    m_pData->clear();
+    delete m_pData;
 }
-
+void Imu::add(ImuData dataPoint){
+    m_pData->push_front(dataPoint);
+    if(m_pData->size() > DATA_SIZE){
+        m_pData->resize(DATA_SIZE);
+    }
+}
 int Imu::start(){
     extern int fd;
     s8 stat;
@@ -77,10 +73,7 @@ void Imu::stop(){
 }
 void Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
-    int nPingPong = 0;
     int result;
-    
-    u8 currentMode;
 
     result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     this_thread::sleep_for(chrono::milliseconds(20));
@@ -102,36 +95,47 @@ void Imu::imuPoller(Imu* pImu){
         mtxData.unlock();
         
         if(result ==0){
-            pImu->m_pRoll->add(hrp.r);
-            pImu->m_pPitch->add(hrp.p);
-            pImu->m_pYawRateX->add(gyro.x);
-            pImu->m_pYawRateY->add(gyro.y);
-            pImu->m_pAccelX->add(accel.x);
-            pImu->m_pAccelY->add(accel.y);       
+            ImuData dataPoint;
+            dataPoint.roll = hrp.r;
+            dataPoint.pitch = hrp.p;
+            dataPoint.yawRateX = gyro.x;
+            dataPoint.yawRateY = gyro.y;
+            dataPoint.accX = accel.x;
+            dataPoint.accY = accel.y;
+            pImu->add(dataPoint);    
         }
  
         this_thread::sleep_until(timePt);
     }
 }
-double Imu::getAccelRange(int nSamles){
-    return 0.0;
+ImuData sum(ImuAveragedData a, ImuAveragedData b){ 
+    ImuData result;
+    result.accX = a.accX + b.accX;
+    return result;
+}
 
-}
-double Imu::getAverageAccelX(int nSamples){
-    return m_pAccelX->calc( nSamples);
-}
-double Imu::getAverageAccelY(int nSamples){
-    return m_pAccelY->calc( nSamples);
-}
-double Imu::getAverageRoll(int nSamples){
-    return m_pRoll->calc(nSamples);
-}
-double Imu::getAveragePitch(int nSamples){
-    return m_pPitch->calc(nSamples);
-}
-double Imu::getAverageYawRateX(int nSamples){
-    return m_pYawRateX->calc(nSamples);
-}
-double Imu::getAverageYawRateY(int nSamples){
-    return m_pYawRateY->calc(nSamples);
+ImuAveragedData Imu::getAveragedData(int nSamples){
+    ImuAveragedData result = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    int size = m_pData->size();
+    if(size > 0){
+        int n = (nSamples < size)? m_pData->size() : nSamples;
+        auto it = m_pData->begin();
+        for(int i = 0; i < nSamples; i++){
+            ImuData dataPoint = *it;
+            result.accX += dataPoint.accX;
+            result.accY += dataPoint.accY;
+            result.roll += dataPoint.roll;
+            result.pitch += dataPoint.pitch;
+            result.yawRateX += dataPoint.yawRateX;
+            result.yawRateY += dataPoint.yawRateY;
+            advance(it,1);
+        }
+        result.accX /= nSamples;
+        result.accY /= nSamples;
+        result.roll /= nSamples;
+        result.pitch /= nSamples;
+        result.yawRateX /= nSamples;
+        result.yawRateY /= nSamples;
+    }
+    return result;
 }

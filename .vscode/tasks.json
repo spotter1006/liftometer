@@ -7,6 +7,8 @@
 			"command": "/usr/bin/g++",
 			"args": [
 				// "-Wl,--verbose ",
+				"-O0",			// Optimization level 0
+				"-pg",			// gprof profiling data
 				"-I${workspaceFolder}../",
 				"-pthread",
 				"-fdiagnostics-color=always",
