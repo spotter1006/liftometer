@@ -69,7 +69,7 @@ void Encoder::poller(Encoder* pEncoder){
     lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
     lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);
     gpiod::line_event event;
-    auto timeout = chrono::milliseconds(10);
+    auto timeout = chrono::milliseconds(1);
     vector<gpiod::line> lines = {lineA, lineB, lineSwitch};
     gpiod::line_bulk lineBulk = gpiod::line_bulk(lines);
     while(pEncoder->isKeepRunning()){

@@ -43,10 +43,6 @@ int Display::updater(Display* pDisplay){
         averages = pImu->getAveragedData(nSamples);
         mtxData.unlock();
         
-        // IMU angle units are 1/16 of a degree
-        averages.roll /= 16.0;
-        averages.pitch /= 16.0;
-        
         double dYawRate = atan2(averages.yawRateY, averages.yawRateX) * 180.0 / M_PI;
         double dAccel = sqrt(averages.accX * averages.accX + averages.accY * averages.accY); 
 
