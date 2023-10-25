@@ -7,7 +7,7 @@
 #include <thread>
 #include <mutex>
 
-#define SAMPLE_RATE_MS (200)
+#define SAMPLE_RATE_MS (10)
 #define DATA_SIZE 20000000
 using namespace std;
 
