@@ -14,7 +14,7 @@ sudo apt install gpiod libgpiod-dev
 ````
 ## Monitoring & Debug Tools
 ```
-sudo apt install nmon
+sudo apt install git
 sudo apt install code
 sudo apt install nmon
 ```
