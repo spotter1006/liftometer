@@ -14,10 +14,13 @@ C and C++ project for the  sailing device, "liftometer".
 - 
 ## Dependencies
 
-sudo apt-get install build-essential
+sudo apt install build-essential
 
 sudo apt install gpiod libgpiod-dev
 
+## Monitoring debug tool
+
+sudo apt install nmon
 
 
 ## Build
