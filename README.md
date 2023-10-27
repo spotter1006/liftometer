@@ -7,13 +7,11 @@ C and C++ project for the  sailing device, "liftometer".
 - Uses a rotary encoder connected to GPIO 23, 24. Push button connected to GPIO 25
 - Uses a Bosch BNO055 IMU in UART communicatios mode connected to ttyS0. HW reset connected to GPIO 18.
 - A simple user shell is accessible through the standard console
-- 
 ## Dependencies
 ```
 sudo apt install build-essential
 sudo apt install gpiod libgpiod-dev
 ````
-
 ## Monitoring & Debug Tools
 ```
 sudo apt install nmon
