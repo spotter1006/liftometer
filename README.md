@@ -47,6 +47,6 @@ No debug symbols
 liftometer
 ```
 * Type "h" for a list of commands
-* Hit <enter> to display the data
+* Hit enter to display the data
 
 
