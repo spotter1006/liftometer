@@ -1,11 +1,11 @@
 #ifndef _imu_h_
 #define _imu_h_
 
-#include "average.hpp"
 #include "bno055.h"
 #include <limits>
 #include <thread>
 #include <mutex>
+#include <list>
 
 #define SAMPLE_RATE_MS (10)
 #define DATA_SIZE 20000000
