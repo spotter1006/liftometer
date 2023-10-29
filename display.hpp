@@ -20,7 +20,7 @@
 #define PWM_ANGLE_SCALE (10.11 / 16.0)   // 16 counts per LSB in BNO055 output registers
 #define PWM_ANGLE_OFFSET (PWM_MID)
 
-#define PWM_ACCEL_SCALE (20.0)         // Default, to be scaled dynamically
+#define PWM_ACCEL_SCALE (10.0)         // Default, to be scaled dynamically
 #define PWM_ACCEL_OFFSET (PWM_MIN)
 
 class Display{

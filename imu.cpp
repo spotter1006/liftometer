@@ -98,8 +98,12 @@ void Imu::imuPoller(Imu* pImu){
             ImuData dataPoint;
             dataPoint.roll = hrp.r;
             dataPoint.pitch = hrp.p;
-            dataPoint.yawRateX = gyro.x;
-            dataPoint.yawRateY = gyro.y;
+            dataPoint.heading = hrp.h;
+
+            // Gyro gives yaw rate in fusion mode
+            dataPoint.gyroX = gyro.x;
+            dataPoint.gyroY = gyro.y;
+
             dataPoint.accX = accel.x;
             dataPoint.accY = accel.y;
             pImu->add(dataPoint);    
@@ -107,11 +111,6 @@ void Imu::imuPoller(Imu* pImu){
  
         this_thread::sleep_until(timePt);
     }
-}
-ImuData sum(ImuAveragedData a, ImuAveragedData b){ 
-    ImuData result;
-    result.accX = a.accX + b.accX;
-    return result;
 }
 
 ImuAveragedData Imu::getAveragedData(int nSamples){
@@ -126,16 +125,18 @@ ImuAveragedData Imu::getAveragedData(int nSamples){
             result.accY += dataPoint.accY;
             result.roll += dataPoint.roll;
             result.pitch += dataPoint.pitch;
-            result.yawRateX += dataPoint.yawRateX;
-            result.yawRateY += dataPoint.yawRateY;
+            result.heading += dataPoint.heading;
+            result.gyroX += dataPoint.gyroX;
+            result.gyroY += dataPoint.gyroY;
             advance(it,1);
         }
         result.accX /= nSamples;
         result.accY /= nSamples;
         result.roll /= nSamples;
         result.pitch /= nSamples;
-        result.yawRateX /= nSamples;
-        result.yawRateY /= nSamples;
+        result.heading /= nSamples;
+        result.gyroX /= nSamples;
+        result.gyroY /= nSamples;
     }
     return result;
 }

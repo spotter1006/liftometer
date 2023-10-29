@@ -14,16 +14,18 @@ using namespace std;
 typedef struct IMU_DATA{
     short roll;
     short pitch;
-    short yawRateX;
-    short yawRateY;
+    short heading;
+    short gyroX;
+    short gyroY;
     short accX;
     short accY;
 }ImuData;
 typedef struct IMU_AVERAGED_DATA{
     double roll;
     double pitch;
-    double yawRateX;
-    double yawRateY;
+    double heading;
+    double gyroX;
+    double gyroY;
     double accX;
     double accY;
 }ImuAveragedData;

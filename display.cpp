@@ -43,17 +43,19 @@ int Display::updater(Display* pDisplay){
         averages = pImu->getAveragedData(nSamples);
         mtxData.unlock();
         
-        double dYawRate = atan2(averages.yawRateY, averages.yawRateX) * 180.0 / M_PI;
+        double dAccelAngle = atan2(averages.gyroY, averages.gyroX) * 180.0 / M_PI;
         double dAccel = sqrt(averages.accX * averages.accX + averages.accY * averages.accY); 
+ 
 
         imuAngleToPwm(averages.roll,    &nOnVals[0], &nOffVals[0]);
         imuAngleToPwm(averages.pitch,   &nOnVals[1], &nOffVals[1]);
-        imuAngleToPwm(dYawRate, &nOnVals[2], &nOffVals[2]);
+
+        imuAngleToPwm(dAccelAngle, &nOnVals[2], &nOffVals[2]);
         imuAccelToPwm(dAccel, &nOnVals[3], &nOffVals[3]);
 
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
-        // printf("\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+        // printf("\33[2K\rAverage(%d): Accel: %d, gyro: %d, roll: %d pitch: %d", 
         //     nSampleSize, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         fflush(stdout); 
 

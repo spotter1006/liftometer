@@ -68,5 +68,6 @@
     "chrono": "cpp",
     "istream": "cpp",
     "stop_token": "cpp"
-  }
+  },
+  "typescript.tsserver.maxTsServerMemory": 500
 }
