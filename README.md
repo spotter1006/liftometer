@@ -8,7 +8,7 @@ C and C++ project for the  sailing device, "liftometer".
 - Uses a Bosch BNO055 IMU in UART communicatios mode connected to ttyS0. HW reset connected to GPIO 18.
 - A simple user shell is accessible through the standard console
 ## Zram
-The raspberry pi 0 has 500M of RAM, about halfo of which is available after OS stuff. THis is enough to run liftometer, but if you want to use MS Code with the C/C++ extensions, the performance is inadequate. ZRAM makes a compressed swap drive.
+The raspberry pi 0 has 500M of RAM, about half of which is used by the OS. This is enough to run liftometer, but if you want to use MS Code with the C/C++ extensions, the performance is inadequate. ZRAM makes a compressed swap drive.
 ```
 git clone https://github.com/foundObjects/zram-swap
 cd zram-swap/
