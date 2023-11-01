@@ -14,6 +14,13 @@ git clone https://github.com/foundObjects/zram-swap
 cd zram-swap/
 sudo ./install.sh
 ```
+### performance tweaks in /etc/sysctl.conf:
+```
+vm.vfs_cache_pressure=500
+vm.swappiness=100
+vm.dirty_background_ratio=1
+vm.dirty_ratio=50
+```
 ## Dependencies
 ```
 sudo apt install build-essential
