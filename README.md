@@ -2,7 +2,7 @@
 C and C++ project for the  sailing device, "liftometer". 
 
 - Runs on any linux target
-- Hardware interfaces specfic to Raspberry Pi zero or 4
+- Hardware interfaces specfic to Raspberry Pi Zero 2 W or 4
 - Uses MakerFocus PWM servo drivers for for the indicators
 - Uses a rotary encoder connected to GPIO 23, 24. Push button connected to GPIO 25
 - Uses a Bosch BNO055 IMU in UART communicatios mode connected to ttyS0. HW reset connected to GPIO 18.
