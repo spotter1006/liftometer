@@ -34,9 +34,12 @@ sudo apt install nmon
 ```
 ## Build
 ### Directory Structure
-* Liftometer
-  * Liftometer (application sources)
-  * Test (unit test case sources)
+* liftometer
+  * liftometer (application sources)
+  * test (unit test case sources)
+  * build
+     * debug
+     * relese
 ### Debug Bulid
 This commandline is for a debug build comatible with GDB and VSCode:
 ```
