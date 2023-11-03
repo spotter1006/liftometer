@@ -48,8 +48,9 @@ No debug symbols
 /usr/bin/g++ -I/home/pi/swprojects/liftometer/liftometer../ -pthread /home/pi/swprojects/liftometer/liftometer/*.c* -o /home/pi/swprojects/liftometer/liftometer/build/release/liftometer -lgpiodcxx
 ```
 ## Usage
+Launch release build with high prority (niceness level -10):
 ```
-liftometer
+sudo nice --10 swprojects/liftometer/liftometer/build/release/liftometer
 ```
 * Type "h" for a list of commands
 * Hit enter to display the data
