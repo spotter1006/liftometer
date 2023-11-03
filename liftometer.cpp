@@ -57,7 +57,7 @@ int main(){
             bno055_set_sys_rst(1);
         }else if(line.compare("") == 0){
             int nSamples = (pEncoder->getSwitchVal() == 0)? 1:nSampleSize;
-            printf("\033[A\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
+            printf("\033[A\33[2K\rAverage(%d): Accel: %d, gyro: %d, roll: %d pitch: %d", 
             nSamples, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         }
     }
