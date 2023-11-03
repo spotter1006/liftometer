@@ -14,6 +14,13 @@ git clone https://github.com/foundObjects/zram-swap
 cd zram-swap/
 sudo ./install.sh
 ```
+### performance tweaks in /etc/sysctl.conf:
+```
+vm.vfs_cache_pressure=500
+vm.swappiness=100
+vm.dirty_background_ratio=1
+vm.dirty_ratio=50
+```
 ## Dependencies
 ```
 sudo apt install build-essential
@@ -41,8 +48,13 @@ No debug symbols
 /usr/bin/g++ -I/home/pi/swprojects/liftometer/liftometer../ -pthread /home/pi/swprojects/liftometer/liftometer/*.c* -o /home/pi/swprojects/liftometer/liftometer/build/release/liftometer -lgpiodcxx
 ```
 ## Usage
+Launch release build with normal prority (niceness level 0:
 ```
-liftometer
+swprojects/liftometer/liftometer/build/release/liftometer
+```
+Launch release build with high prority (niceness level -10):
+```
+sudo nice --10 swprojects/liftometer/liftometer/build/release/liftometer
 ```
 * Type "h" for a list of commands
 * Hit enter to display the data
