@@ -112,31 +112,54 @@ void Imu::imuPoller(Imu* pImu){
         this_thread::sleep_until(timePt);
     }
 }
-
-ImuAveragedData Imu::getAveragedData(int nSamples){
-    ImuAveragedData result = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+void Imu::getLatestHrp(ImuData *pData){
+    ImuData latest = *(m_pData->begin());
+    pData->heading=latest.heading;
+    pData->roll=latest.roll;
+    pData->pitch=latest.pitch;
+}
+void Imu::getLatestGyro(ImuData *pData){
+    ImuData latest = *(m_pData->begin());
+    pData->gyroX=latest.gyroX;
+    pData->gyroY=latest.gyroY;
+}
+void Imu::getLatestAccel(ImuData *pData){
+    ImuData latest = *(m_pData->begin());
+    pData->accX=latest.accX;
+    pData->accY=latest.accY;
+}
+void Imu::getAverageAccel(int nSamples, ImuAveragedData *pData){
+    pData->accX = 0.0;
+    pData->accY = 0.0;
     int size = m_pData->size();
     if(size > 0){
         int n = (nSamples < size)? m_pData->size() : nSamples;
         auto it = m_pData->begin();
         for(int i = 0; i < nSamples; i++){
             ImuData dataPoint = *it;
-            result.accX += dataPoint.accX;
-            result.accY += dataPoint.accY;
-            result.roll += dataPoint.roll;
-            result.pitch += dataPoint.pitch;
-            result.heading += dataPoint.heading;
-            result.gyroX += dataPoint.gyroX;
-            result.gyroY += dataPoint.gyroY;
+            pData->accX += dataPoint.accX;
+            pData->accY += dataPoint.accY;
             advance(it,1);
         }
-        result.accX /= nSamples;
-        result.accY /= nSamples;
-        result.roll /= nSamples;
-        result.pitch /= nSamples;
-        result.heading /= nSamples;
-        result.gyroX /= nSamples;
-        result.gyroY /= nSamples;
+        pData->accX /= nSamples;
+        pData->accY /= nSamples;
+        
     }
-    return result;
+}
+void Imu::getAverageHeading(int nSamples, ImuAveragedData *pData){
+    pData->heading = 0.0;
+    int size = m_pData->size();
+    if(size > 0){
+        int n = (nSamples < size)? m_pData->size() : nSamples;
+        auto it = m_pData->begin();
+        for(int i = 0; i < nSamples; i++){
+            ImuData dataPoint = *it;
+            pData->heading += dataPoint.heading;
+
+            advance(it,1);
+        }
+        pData->heading /= nSamples;
+
+        
+    }
 }

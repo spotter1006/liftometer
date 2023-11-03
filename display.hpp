@@ -15,9 +15,10 @@
 
 #define PWM_MIN (683)     // .5 mS
 #define PWM_MAX (3413)    // 2.5 mS
-#define PWM_MID ((PWM_MAX - PWM_MIN) / 2)   
+#define PWM_RANGE (PWM_MAX - PWM_MIN)
+#define PWM_MID (PWM_RANGE / 2)   
 
-#define PWM_ANGLE_SCALE (10.11 / 16.0)   // 16 counts per LSB in BNO055 output registers
+#define PWM_ANGLE_SCALE (10.11 / 16.0)  // 16 counts per degree from IMU
 #define PWM_ANGLE_OFFSET (PWM_MID)
 
 #define PWM_ACCEL_SCALE (10.0)         // Default, to be scaled dynamically
@@ -32,8 +33,7 @@ class Display{
         int setPWMVals(unsigned int * nOnVals, unsigned int *nOffVals);
         inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
-        static void imuAngleToPwm(double angle, unsigned int *on, unsigned int *off);
-        static void imuAccelToPwm(double accel, unsigned int *on, unsigned int *off);
+        static void imuAngleToPwm(double angle, unsigned int *on, unsigned int *off, unsigned int phase = 0);
         static int updater(Display* pDisplay);
 
         std::thread m_tUpdater;

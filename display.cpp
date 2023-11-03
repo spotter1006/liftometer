@@ -33,31 +33,36 @@ int Display::updater(Display* pDisplay){
 
     int nResult = 0;
     chrono::steady_clock::time_point timePt;
-    ImuAveragedData averages;
+    ImuAveragedData average;
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
-        
+        ImuData latest;
         nSampleSize = pEncoder->getCount();
         int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;  // Just latest measurements if switch depressed
-        mtxData.lock();   
-        averages = pImu->getAveragedData(nSamples);
+        mtxData.lock();  
+        pImu->getLatestHrp(&latest);
+        pImu->getLatestGyro(&latest);
+        pImu->getLatestAccel(&latest);
+
+        pImu->getAverageHeading(nSampleSize, &average);
         mtxData.unlock();
         
-        double dAccelAngle = atan2(averages.gyroY, averages.gyroX) * 180.0 / M_PI;
-        double dAccel = sqrt(averages.accX * averages.accX + averages.accY * averages.accY); 
- 
-
-        imuAngleToPwm(averages.roll,    &nOnVals[0], &nOffVals[0]);
-        imuAngleToPwm(averages.pitch,   &nOnVals[1], &nOffVals[1]);
-
-        imuAngleToPwm(dAccelAngle, &nOnVals[2], &nOffVals[2]);
-        imuAccelToPwm(dAccel, &nOnVals[3], &nOffVals[3]);
+        // 16 counts per degree from IMU
+        imuAngleToPwm(latest.roll, &nOnVals[0], &nOffVals[0]);       
+        imuAngleToPwm(latest.pitch, &nOnVals[1], &nOffVals[1]);      
+        imuAngleToPwm(latest.heading, &nOnVals[2], &nOffVals[2]);    
+        imuAngleToPwm(average.heading, &nOnVals[3], &nOffVals[3]);    
+        
+        /************* TODO:***************************
+            - gyro.z for yaw rate (shows how the boat is sliding)
+            - accel.x,y for performance indicator 
+        *********************************************************/
 
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
         // printf("\33[2K\rAverage(%d): Accel: %d, gyro: %d, roll: %d pitch: %d", 
         //     nSampleSize, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
-        fflush(stdout); 
+        // fflush(stdout); 
 
         this_thread::sleep_until(timePt);
     }
@@ -75,23 +80,11 @@ void Display::stop(){
     m_bKeepRunning = false;  
 }
 
-void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off){
-    int nPulseWidth =  PWM_MIN + PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
-    if (nPulseWidth < PWM_MIN)
-        nPulseWidth = PWM_MIN;
-    else if(nPulseWidth > PWM_MAX)
-        nPulseWidth = PWM_MAX;
+void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off, unsigned int phase){
+    int nPulseWidth =  PWM_ANGLE_OFFSET + (angle * PWM_ANGLE_SCALE);
+    if (nPulseWidth < PWM_MIN)  nPulseWidth = PWM_MIN;
+    else if(nPulseWidth > PWM_RANGE) nPulseWidth = PWM_RANGE;
 
-    *on = 0;            // Phase shift = 0
-    *off = nPulseWidth - 1;
+    *on = phase;            // Phase shift
+    *off = PWM_MIN + phase + nPulseWidth - 1;
 } 
-void Display::imuAccelToPwm(double accel, unsigned int *on, unsigned int *off){
-    int nPulseWidth =  PWM_MIN + (accel * PWM_ACCEL_SCALE);
-    if (nPulseWidth < PWM_MIN)
-        nPulseWidth = PWM_MIN;
-    else if(nPulseWidth > PWM_MAX)
-        nPulseWidth = PWM_MAX;
-
-    *on = 0;        // Phase shift = 0
-    *off = nPulseWidth -1;
-}

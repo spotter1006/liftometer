@@ -37,7 +37,11 @@ class Imu{
         static void imuPoller(Imu*); // Main thread
         int start();
         void stop();
-        ImuAveragedData getAveragedData(int nSamples);
+        void getLatestHrp(ImuData *pData);
+        void getLatestGyro(ImuData *pData);
+        void getLatestAccel(ImuData *pData);
+        void getAverageAccel(int nSamples, ImuAveragedData *pData);
+        void getAverageHeading(int nSamples, ImuAveragedData *pData);
         inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
         inline void unlock(void){m_mtxData.unlock();}
         inline bool isKeepRunning(){return m_bKeepRunning;}
