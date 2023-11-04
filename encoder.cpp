@@ -1,5 +1,5 @@
 #include "encoder.hpp"
-
+#include <math.h> 
 extern gpiod::chip chip;
 /******************************************************************************
    Quadrature encoder makes two waveforms that are 90° out of phase:
@@ -46,12 +46,16 @@ Encoder::Encoder(){
     m_nValB = 0;
     m_nSwitchVal =1;
     m_nCount = 1;
+    m_dVelocity=0.0;
+    m_dPosition = 1000.0;
 }
 
 int Encoder::start(){
     m_bKeepRunning = true;
     std::thread t1(poller, this);
     t1.detach();
+    std::thread t2(motion,this);
+    t2.detach();
     return(0);
 }
 void Encoder::stop(){
@@ -59,8 +63,12 @@ void Encoder::stop(){
 }
 void Encoder::add(int n){
     m_nCount += n;
-    if(m_nCount < 1) m_nCount =1;
 }
+
+/*
+    poller thread
+    uses a state machine to count the edges on the encoder A and B lines
+*/
 void Encoder::poller(Encoder* pEncoder){
     gpiod::line lineA = chip.get_line(ENCODER_LINE_A); 
     gpiod::line lineB = chip.get_line(ENCODER_LINE_B);
@@ -108,6 +116,26 @@ void Encoder::poller(Encoder* pEncoder){
     lineB.release();
     lineSwitch.release();
 }
+/*
+    Motion thread
+    Models a mass accelerated by a force proportional to the encoder count
+    dampded by viscous friction
+*/
+void Encoder::motion(Encoder* pEncoder){
+        double viscousFriction;
+        double force;
+        double acceleration;
+    while(1){
+        viscousFriction = pEncoder->m_dVelocity * VISCOUS_FRICTION_COEFFICIENT;
+        force = pEncoder->getCount() - viscousFriction;
+        
+        double acceleration = force / MASS;
+        pEncoder->calcVelocity(acceleration);
+        pEncoder->calcPosition();
+        pEncoder->clearCount();
+        this_thread::sleep_for(chrono::milliseconds(MOTION_INTERVAL_MS));
+    }
+}
 int Encoder::getCount(){
     int nCount;
     lock();
@@ -115,3 +143,21 @@ int Encoder::getCount(){
     unlock();
     return nCount;
 }
+void Encoder::clearCount(){
+    lock();
+    m_nCount = 0;
+    unlock();
+}
+
+void Encoder::calcVelocity(double acceleration){
+    lock();
+    m_dVelocity += acceleration;
+    unlock();
+}
+void Encoder::calcPosition(){
+    lock();
+    m_dPosition += m_dVelocity;
+    if(signbit(m_dPosition)) m_dPosition = 0.0;
+    unlock();
+}
+

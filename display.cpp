@@ -37,7 +37,7 @@ int Display::updater(Display* pDisplay){
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         ImuData latest;
-        nSampleSize = pEncoder->getCount();
+        nSampleSize = pEncoder->getPosition();
         int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;  // Just latest measurements if switch depressed
         mtxData.lock();  
         pImu->getLatestHrp(&latest);
@@ -62,7 +62,7 @@ int Display::updater(Display* pDisplay){
 
         // printf("\33[2K\rAverage(%d): Accel: %d, gyro: %d, roll: %d pitch: %d", 
         //     nSampleSize, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
-        // fflush(stdout); 
+        // // fflush(stdout); 
 
         this_thread::sleep_until(timePt);
     }
