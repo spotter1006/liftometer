@@ -1,5 +1,10 @@
 #ifndef _ENCODER_H_
-#define __ENCODER_H_
+#define _ENCODER_H_
+
+#define MASS (1.0)
+#define MAX_ACCELERATION (10)
+#define VISCOUS_FRICTION_COEFFICIENT (0.5)
+#define MOTION_INTERVAL_MS (1000)
 
 #include <gpiod.hpp>
 #include<thread>
@@ -17,6 +22,7 @@ class Encoder{
         int start();
         void stop();
         static void poller(Encoder*); // Main thread
+        static void motion(Encoder*); // Thread to calculate dynamic position
         inline void lock(){m_mtxData.lock();}
         inline void unlock(void){m_mtxData.unlock();}
         inline void setValA(int nValA){m_nValA=nValA;}
@@ -27,6 +33,10 @@ class Encoder{
         inline void setSwitchVal(int nVal){m_nSwitchVal = nVal;}
         void add(int n);
         int getCount();
+        void clearCount();
+        void calcVelocity(double acceleration);
+        void calcPosition();
+        inline int getPosition(){return (int)(m_dPosition + 0.5);}
         inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
         int m_nCount;
@@ -35,6 +45,8 @@ class Encoder{
         int m_nValB;
         int m_nSwitchVal;
         bool m_bKeepRunning;
+        double m_dVelocity;
+        double m_dPosition;
 };
 
 #endif

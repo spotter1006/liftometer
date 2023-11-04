@@ -2,8 +2,10 @@
 #include "imu.hpp"
 #include <signal.h>
 #include <unistd.h>
+#include <cmath>
 #include "display.hpp"
 #include "encoder.hpp"
+#include "imu.hpp"
 
 #define BUFFER_SIZE 10000000    // 10 million samples 
 using namespace std;
@@ -56,9 +58,12 @@ int main(){
             cout << "Reset command recieved, resetting the BNO055..." << endl;
             bno055_set_sys_rst(1);
         }else if(line.compare("") == 0){
-            int nSamples = (pEncoder->getSwitchVal() == 0)? 1:nSampleSize;
-            printf("\033[A\33[2K\rAverage(%d): Accel: %d, YawRate: %d, roll: %d pitch: %d", 
-            nSamples, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
+            int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;
+            int nTotalMs = nSamples * (SAMPLE_RATE_MS); 
+            int nMinutes = nTotalMs / 60000;
+            double dSeconds = std::fmod((nTotalMs / 1000.0), 60.0);
+            printf("\033[A\33[2K\rAverage(%02d:%2.3f): Accel: %d, Heading: %d, roll: %d pitch: %d", 
+            nMinutes, dSeconds, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         }
     }
     // Clean up and exit
