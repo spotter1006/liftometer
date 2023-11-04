@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "linux-gcc-arm",
+      "name": "linux-gcc-arm64",
       "includePath": [
         "${workspaceFolder}/**"
       ],
