@@ -62,7 +62,7 @@ int main(){
             int nTotalMs = nSamples * (SAMPLE_RATE_MS); 
             int nMinutes = nTotalMs / 60000;
             double dSeconds = std::fmod((nTotalMs / 1000.0), 60.0);
-            printf("\033[A\33[2K\rAverage(%02d:%2.3f): Accel: %d, Heading: %d, roll: %d pitch: %d", 
+            printf("\033[A\33[2K\rAverage(%02d:%2.3f): Average Heading: %d, Heading: %d, roll: %d pitch: %d", 
             nMinutes, dSeconds, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         }
     }
