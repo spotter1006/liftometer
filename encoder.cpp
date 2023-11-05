@@ -127,9 +127,8 @@ void Encoder::motion(Encoder* pEncoder){
         double acceleration;
     while(1){
         viscousFriction = pEncoder->m_dVelocity * VISCOUS_FRICTION_COEFFICIENT;
-        force = pEncoder->getCount() - viscousFriction;
-        
-        double acceleration = force / MASS;
+        force = (pEncoder->getCount() * FORCE_CONSTANT) - viscousFriction;
+        acceleration = force / MASS;
         pEncoder->calcVelocity(acceleration);
         pEncoder->calcPosition();
         pEncoder->clearCount();

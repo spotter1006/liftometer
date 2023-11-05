@@ -1,11 +1,6 @@
 #ifndef _ENCODER_H_
 #define _ENCODER_H_
 
-#define MASS (1.0)
-#define MAX_ACCELERATION (10)
-#define VISCOUS_FRICTION_COEFFICIENT (0.5)
-#define MOTION_INTERVAL_MS (1000)
-
 #include <gpiod.hpp>
 #include<thread>
 #include <mutex>
@@ -13,6 +8,12 @@
 #define ENCODER_LINE_A (23)
 #define ENCODER_LINE_B (24)
 #define SWITCH_LINE (25)
+
+#define MASS (1.0)
+#define FORCE_CONSTANT (10.0)
+#define MAX_ACCELERATION (10)
+#define VISCOUS_FRICTION_COEFFICIENT (0.7)
+#define MOTION_INTERVAL_MS (1000)
 
  using namespace std;
 
