@@ -53,11 +53,11 @@ No debug symbols
 ## Usage
 Launch release build with normal prority (niceness level 0:
 ```
-swprojects/liftometer/liftometer/build/release/liftometer
+/home/pi/swprojects/liftometer/liftometer/build/release/liftometer
 ```
 Launch release build with high prority (niceness level -10):
 ```
-sudo nice --10 swprojects/liftometer/liftometer/build/release/liftometer
+sudo nice --10 /home/pi/swprojects/liftometer/liftometer/build/release/liftometer
 ```
 * Type "h" for a list of commands
 * Hit enter to display the data
