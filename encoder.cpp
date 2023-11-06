@@ -45,17 +45,13 @@ Encoder::Encoder(){
     m_nValA = 0;
     m_nValB = 0;
     m_nSwitchVal =1;
-    m_nCount = 1;
-    m_dVelocity=0.0;
-    m_dPosition = 1000.0;
+    m_nCount = 0;
 }
 
 int Encoder::start(){
     m_bKeepRunning = true;
     std::thread t1(poller, this);
     t1.detach();
-    std::thread t2(motion,this);
-    t2.detach();
     return(0);
 }
 void Encoder::stop(){
@@ -63,6 +59,9 @@ void Encoder::stop(){
 }
 void Encoder::add(int n){
     m_nCount += n;
+    if(m_nCount >= 15) 
+        m_nCount =0;
+    else if(m_nCount < 0) m_nCount = 15;
 }
 
 /*
@@ -116,29 +115,11 @@ void Encoder::poller(Encoder* pEncoder){
     lineB.release();
     lineSwitch.release();
 }
-/*
-    Motion thread
-    Models a mass accelerated by a force proportional to the encoder count
-    dampded by viscous friction
-*/
-void Encoder::motion(Encoder* pEncoder){
-        double viscousFriction;
-        double force;
-        double acceleration;
-    while(1){
-        viscousFriction = pEncoder->m_dVelocity * VISCOUS_FRICTION_COEFFICIENT;
-        force = (pEncoder->getCount() * FORCE_CONSTANT) - viscousFriction;
-        acceleration = force / MASS;
-        pEncoder->calcVelocity(acceleration);
-        pEncoder->calcPosition();
-        pEncoder->clearCount();
-        this_thread::sleep_for(chrono::milliseconds(MOTION_INTERVAL_MS));
-    }
-}
+
 int Encoder::getCount(){
     int nCount;
     lock();
-    nCount = m_nCount;
+    nCount = m_nCount / 2;
     unlock();
     return nCount;
 }
@@ -148,15 +129,4 @@ void Encoder::clearCount(){
     unlock();
 }
 
-void Encoder::calcVelocity(double acceleration){
-    lock();
-    m_dVelocity += acceleration;
-    unlock();
-}
-void Encoder::calcPosition(){
-    lock();
-    m_dPosition += m_dVelocity;
-    if(signbit(m_dPosition)) m_dPosition = 0.0;
-    unlock();
-}
 

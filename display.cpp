@@ -37,14 +37,13 @@ int Display::updater(Display* pDisplay){
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         ImuData latest;
-        nSampleSize = pEncoder->getPosition();
-        int nSamples = (pEncoder->getSwitchVal() == 0)? 1 : nSampleSize;  // Just latest measurements if switch depressed
+        nSampleSize = pImu->getHeadingAverageSamples(pEncoder->getCount());
+       
         mtxData.lock();  
         pImu->getLatestHrp(&latest);
         pImu->getLatestGyro(&latest);
         pImu->getLatestAccel(&latest);
-
-        pImu->getAverageHeading(nSampleSize, &average);
+        pImu->getAverageHeading(1);
         mtxData.unlock();
         
         // 16 counts per degree from IMU
@@ -60,11 +59,11 @@ int Display::updater(Display* pDisplay){
 
         pDisplay->setPWMVals(nOnVals, nOffVals);
 
-        int nTotalMs = nSamples * (SAMPLE_RATE_MS); 
+        int nTotalMs = nSampleSize * (SAMPLE_RATE_MS); 
         int nMinutes = nTotalMs / 60000;
-        double dSeconds = std::fmod((nTotalMs / 1000.0), 60.0);
-        printf("\033[A\33[2K\rAverage(%02d:%2.3f): Average Heading: %d, Heading: %d, roll: %d pitch: %d", 
-        nMinutes, dSeconds, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
+        int nSeconds = (nTotalMs / 1000) % 60;
+        printf("\033[A\33[2K\rAverage(%02d:%02d): Average Heading: %d, Heading: %d, roll: %d pitch: %d", 
+        nMinutes, nSeconds, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
         fflush(stdout); 
 
         this_thread::sleep_until(timePt);

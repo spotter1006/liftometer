@@ -6,6 +6,7 @@
 #include <iostream>
 #include <gpiod.hpp>
 #include <unistd.h>
+#include <cstring>
 #include "bno055_support.h"
 #include "liftometer.hpp"
 
@@ -29,6 +30,8 @@ void Imu::add(ImuData dataPoint){
     if(m_pData->size() > DATA_SIZE){
         m_pData->resize(DATA_SIZE);
     }
+    // Update sums
+
 }
 int Imu::start(){
     extern int fd;
@@ -84,6 +87,7 @@ void Imu::imuPoller(Imu* pImu){
     bno055_gyro_t gyro;   
     bno055_euler_t hrp; // heading, roll, pitch
     bno055_linear_accel_t accel;    // Linear acceleration (gravity removed)
+    ImuData dataPoint;
     while(pImu->isKeepRunning()){   
 
         // Calculate interval for the next wake up
@@ -95,18 +99,17 @@ void Imu::imuPoller(Imu* pImu){
         mtxData.unlock();
         
         if(result ==0){
-            ImuData dataPoint;
             dataPoint.roll = hrp.r;
             dataPoint.pitch = hrp.p;
             dataPoint.heading = hrp.h;
-
-            // Gyro gives yaw rate in fusion mode
             dataPoint.gyroX = gyro.x;
             dataPoint.gyroY = gyro.y;
-
             dataPoint.accX = accel.x;
             dataPoint.accY = accel.y;
+
             pImu->add(dataPoint);    
+            pImu->updateHeadingSums(dataPoint);
+
         }
  
         this_thread::sleep_until(timePt);
@@ -128,38 +131,30 @@ void Imu::getLatestAccel(ImuData *pData){
     pData->accX=latest.accX;
     pData->accY=latest.accY;
 }
-void Imu::getAverageAccel(int nSamples, ImuAveragedData *pData){
-    pData->accX = 0.0;
-    pData->accY = 0.0;
-    int size = m_pData->size();
-    if(size > 0){
-        int n = (nSamples < size)? m_pData->size() : nSamples;
-        auto it = m_pData->begin();
-        for(int i = 0; i < nSamples; i++){
-            ImuData dataPoint = *it;
-            pData->accX += dataPoint.accX;
-            pData->accY += dataPoint.accY;
-            advance(it,1);
-        }
-        pData->accX /= nSamples;
-        pData->accY /= nSamples;
-        
-    }
+
+int Imu::getAverageHeading(int nAverageIndex){
+    return getHeadingSum(nAverageIndex) / m_pData->size();
 }
-void Imu::getAverageHeading(int nSamples, ImuAveragedData *pData){
-    pData->heading = 0.0;
-    int size = m_pData->size();
-    if(size > 0){
-        int n = (nSamples < size)? m_pData->size() : nSamples;
-        auto it = m_pData->begin();
-        for(int i = 0; i < nSamples; i++){
-            ImuData dataPoint = *it;
-            pData->heading += dataPoint.heading;
-
-            advance(it,1);
+long Imu::getHeadingSum(int index){
+    return m_nHeadingSums[index];
+}
+int Imu::getHeadingAverageSamples(int index){
+    return m_nHeadingSamples[index];
+}
+void Imu::updateHeadingSums(ImuData dataPoint){
+    memset(m_nHeadingSums, 0, 8 *sizeof(long));
+    int nTotalSamples = m_pData->size();
+    int nCount = 0;
+    for(int i = 0; i < 8; i++){
+        int nSamples = m_nHeadingSamples[i];
+        for(int j = 0; j < nSamples; j++){
+            mtxData.lock();
+            m_nHeadingSums[i] += dataPoint.heading;
+            mtxData.unlock();
+            nCount++;
+            if(nCount >= nTotalSamples) break;
         }
-        pData->heading /= nSamples;
-
-        
+        if(nCount >= nTotalSamples) break;
+        if(i < 7) m_nHeadingSums[i + 1] =m_nHeadingSums[i];
     }
 }
