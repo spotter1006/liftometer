@@ -67,7 +67,10 @@
     "bno055_support.h": "c",
     "chrono": "cpp",
     "istream": "cpp",
-    "stop_token": "cpp"
+    "stop_token": "cpp",
+    "condition_variable": "cpp",
+    "fstream": "cpp",
+    "ostream": "cpp"
   },
   "typescript.tsserver.maxTsServerMemory": 500
 }

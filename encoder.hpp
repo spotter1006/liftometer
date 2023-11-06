@@ -35,9 +35,6 @@ class Encoder{
         void add(int n);
         int getCount();
         void clearCount();
-        void calcVelocity(double acceleration);
-        void calcPosition();
-        inline int getPosition(){return (int)(m_dPosition + 0.5);}
         inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
         int m_nCount;
