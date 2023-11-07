@@ -104,21 +104,17 @@ void Imu::imuPoller(Imu* pImu){
         this_thread::sleep_until(timePt);
     }
 }
-void Imu::getLatestHrp(ImuData *pData){
+
+void Imu::getLatestData(ImuData *pData){
     ImuData latest = *(m_pData->begin());
     pData->heading=latest.heading;
     pData->roll=latest.roll;
     pData->pitch=latest.pitch;
-}
-void Imu::getLatestGyro(ImuData *pData){
-    ImuData latest = *(m_pData->begin());
     pData->gyroX=latest.gyroX;
     pData->gyroY=latest.gyroY;
-}
-void Imu::getLatestAccel(ImuData *pData){
-    ImuData latest = *(m_pData->begin());
     pData->accX=latest.accX;
     pData->accY=latest.accY;
+
 }
 
 int Imu::getAverageHeading(int nAverageIndex){

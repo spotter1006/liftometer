@@ -38,9 +38,8 @@ class Imu{
         static void imuPoller(Imu*); // Main thread
         int start();
         void stop();
-        void getLatestHrp(ImuData *pData);
-        void getLatestGyro(ImuData *pData);
-        void getLatestAccel(ImuData *pData);
+        void getLatestData(ImuData *pData);
+       
         long getHeadingSum(int index);
         int getHeadingAverageSamples(int index);
         int getAverageHeading(int nAverageIndex);
