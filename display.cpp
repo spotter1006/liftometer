@@ -9,7 +9,7 @@
 using namespace std;
 
 extern Encoder *pEncoder;
-
+extern timed_mutex mtxData;
 extern Imu* pImu;
 int nSampleSize;
 unsigned int nOnVals[16];
@@ -33,21 +33,24 @@ int Display::updater(Display* pDisplay){
 
     int nResult = 0;
     chrono::steady_clock::time_point timePt;
-
+    ImuAveragedData average;
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         ImuData latest;
-        int averageIndex = pEncoder->getCount();
-        nSampleSize = pImu->getHeadingAverageSamples(averageIndex);
+        nSampleSize = pImu->getHeadingAverageSamples(pEncoder->getCount());
        
-        pImu->getData(&latest);
+        mtxData.lock();  
+        pImu->getLatestHrp(&latest);
+        pImu->getLatestGyro(&latest);
+        pImu->getLatestAccel(&latest);
         pImu->getAverageHeading(1);
+        mtxData.unlock();
         
         // 16 counts per degree from IMU
         imuAngleToPwm(latest.roll, &nOnVals[0], &nOffVals[0]);       
         imuAngleToPwm(latest.pitch, &nOnVals[1], &nOffVals[1]);      
         imuAngleToPwm(latest.heading, &nOnVals[2], &nOffVals[2]);    
-        imuAngleToPwm(pImu->getAverageHeading(averageIndex), &nOnVals[3], &nOffVals[3]);    
+        imuAngleToPwm(average.heading, &nOnVals[3], &nOffVals[3]);    
         
         /************* TODO:***************************
             - gyro.z for yaw rate (shows how the boat is sliding)

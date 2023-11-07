@@ -14,7 +14,7 @@ int fd;     // Handle to serial port
 #define I2C0           5
 
 u8 txBuff[16];
-u8 rxBuff[64];
+u8 rxBuff[50];
 
 // u8 len;
 s8 nStatus;
@@ -70,8 +70,8 @@ int BNO055_uart_init(int speed){
     tty.c_lflag = 0;                // no signaling chars, no echo,
                                     // no canonical processing
     tty.c_oflag = 0;                // no remapping, no delays
-    tty.c_cc[VMIN]  = 4;            // read blocks
-    tty.c_cc[VTIME] = 100;            //  10 seconds between characters read timeout
+    tty.c_cc[VMIN]  = 10;            // read blocks
+    tty.c_cc[VTIME] = 2;            //  se1conds read timeout
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
     tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls,
                                     // enable readingB
@@ -177,7 +177,6 @@ int BNO055_read_combined_data(bno055_gyro_t *gyro, bno055_euler_t* hrp, bno055_l
         return -1;
     if(read(fd, rxBuff, 52) != 52)  // Data plus 2 byte header
         return -2;
-
     if(rxBuff[0] != RESPONSE_START_BYTE) 
         return -3;
     if(rxBuff[1] != 50) 
