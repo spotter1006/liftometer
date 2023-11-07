@@ -46,27 +46,16 @@ int Imu::start(){
     usleep(50);
     line.set_value(1);
     line.release();
-
     sleep(1);       // Wait for the chip to come back
   
     fd = BNO055_uart_init(B115200);
     string message = (fd > 0)? "Successfully intialized the UART" : "Error initialing the UART";
     if(fd < 0)  return -1;
-
     bno055.dev_addr = fd;   
     bno055.bus_write = BNO055_uart_bus_write;
     bno055.bus_read = BNO055_uart_bus_read;
     bno055.delay_msec = BNO055_delay_msek;
-
-    stat = bno055_init(&bno055);    
-   
-    stat = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
-    if(stat == 0){
-        sleep(.02);
-    }else{
-        cout << "Failed to set BNO05 NDOF mode. " << endl;
-    }
-
+    stat = bno055_init(&bno055);   
     thread t1(imuPoller, this);  
     t1.detach();
     return nRet;
