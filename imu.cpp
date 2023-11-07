@@ -110,11 +110,10 @@ void Imu::getLatestData(ImuData *pData){
     pData->gyroY=latest.gyroY;
     pData->accX=latest.accX;
     pData->accY=latest.accY;
-
 }
 
 int Imu::getAverageHeading(int nAverageIndex){
-    return getHeadingSum(nAverageIndex) / m_pData->size();
+    return getHeadingSum(nAverageIndex) / getHeadingAverageSamples(nAverageIndex);
 }
 long Imu::getHeadingSum(int index){
     return m_nHeadingSums[index];
