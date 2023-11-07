@@ -30,7 +30,9 @@ void Imu::add(ImuData dataPoint){
     if(m_pData->size() > DATA_SIZE){
         m_pData->resize(DATA_SIZE);
     }
-    // Update sums
+    // TODO:
+    // Update heading sums with just the latest heading 
+    //remove the UpdateHeadingSums() call below
 
 }
 int Imu::start(){
