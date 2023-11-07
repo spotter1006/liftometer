@@ -65,9 +65,8 @@ void Imu::stop(){
 }
 void Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
-    int result;
-
-    result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
+    
+    int result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     this_thread::sleep_for(chrono::milliseconds(20));
     if(result != 0){
         cout << "Failed to set operation mode mode. IMU poller thread exiting." << endl;
@@ -83,10 +82,7 @@ void Imu::imuPoller(Imu* pImu){
         chrono::_V2::steady_clock::time_point timePt = 
             chrono::steady_clock::now() + chrono::milliseconds(SAMPLE_RATE_MS);  
         
-        mtxData.lock();
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
-        mtxData.unlock();
-        
         if(result ==0){
             dataPoint.roll = hrp.r;
             dataPoint.pitch = hrp.p;
