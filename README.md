@@ -22,6 +22,8 @@ vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 ```
 ## Dependencies
+BCM2835 libray
+http://www.airspayce.com/mikem/bcm2835/
 ```
 sudo apt install build-essential
 sudo apt install gpiod libgpiod-dev
