@@ -30,10 +30,17 @@ void Imu::add(ImuData dataPoint){
     if(m_pData->size() > DATA_SIZE){
         m_pData->resize(DATA_SIZE);
     }
-    // TODO:
-    // Update heading sums with just the latest heading 
-    //remove the UpdateHeadingSums() call below
-
+    // Update sums
+    ImuData oldestData = *m_pData->end();
+    for(ImuData dataPoint : *m_pData){
+        for(int i = 0; i < 8; i++){
+            m_headingSums[i].sum += dataPoint.heading;
+            if(m_headingSums[i].count >= m_headingSums[i].size)
+                m_headingSums[i].sum -= oldestData.heading;
+            else
+                m_headingSums[i].count++;         
+        }
+    }
 }
 int Imu::start(){
     extern int fd;
@@ -93,12 +100,8 @@ void Imu::imuPoller(Imu* pImu){
             dataPoint.gyroY = gyro.y;
             dataPoint.accX = accel.x;
             dataPoint.accY = accel.y;
-
             pImu->add(dataPoint);    
-            pImu->updateHeadingSums(dataPoint);
-
         }
- 
         this_thread::sleep_until(timePt);
     }
 }
@@ -114,29 +117,10 @@ void Imu::getLatestData(ImuData *pData){
     pData->accY=latest.accY;
 }
 
-int Imu::getAverageHeading(int nAverageIndex){
-    return getHeadingSum(nAverageIndex) / getHeadingAverageSamples(nAverageIndex);
+int Imu::getAverageHeading(int index){
+    return m_headingSums[index].sum / m_headingSums[index].count;
 }
-long Imu::getHeadingSum(int index){
-    return m_nHeadingSums[index];
-}
+
 int Imu::getHeadingAverageSamples(int index){
-    return m_nHeadingSamples[index];
-}
-void Imu::updateHeadingSums(ImuData dataPoint){
-    memset(m_nHeadingSums, 0, 8 *sizeof(long));
-    int nTotalSamples = m_pData->size();
-    int nCount = 0;
-    for(int i = 0; i < 8; i++){
-        int nSamples = m_nHeadingSamples[i];
-        for(int j = 0; j < nSamples; j++){
-            mtxData.lock();
-            m_nHeadingSums[i] += dataPoint.heading;
-            mtxData.unlock();
-            nCount++;
-            if(nCount >= nTotalSamples) break;
-        }
-        if(nCount >= nTotalSamples) break;
-        if(i < 7) m_nHeadingSums[i + 1] =m_nHeadingSums[i];
-    }
+    return m_headingSums[index].count;
 }
