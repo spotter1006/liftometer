@@ -40,9 +40,7 @@ int Display::updater(Display* pDisplay){
         nSampleSize = pImu->getHeadingAverageSamples(pEncoder->getCount());
        
         mtxData.lock();  
-        pImu->getLatestHrp(&latest);
-        pImu->getLatestGyro(&latest);
-        pImu->getLatestAccel(&latest);
+        pImu->getLatestData(&latest);
         pImu->getAverageHeading(1);
         mtxData.unlock();
         

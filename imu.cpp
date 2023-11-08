@@ -31,7 +31,16 @@ void Imu::add(ImuData dataPoint){
         m_pData->resize(DATA_SIZE);
     }
     // Update sums
-
+    ImuData oldestData = *m_pData->end();
+    for(ImuData dataPoint : *m_pData){
+        for(int i = 0; i < 8; i++){
+            m_headingSums[i].sum += dataPoint.heading;
+            if(m_headingSums[i].count >= m_headingSums[i].size)
+                m_headingSums[i].sum -= oldestData.heading;
+            else
+                m_headingSums[i].count++;         
+        }
+    }
 }
 int Imu::start(){
     extern int fd;
@@ -46,27 +55,16 @@ int Imu::start(){
     usleep(50);
     line.set_value(1);
     line.release();
-
     sleep(1);       // Wait for the chip to come back
   
     fd = BNO055_uart_init(B115200);
     string message = (fd > 0)? "Successfully intialized the UART" : "Error initialing the UART";
     if(fd < 0)  return -1;
-
     bno055.dev_addr = fd;   
     bno055.bus_write = BNO055_uart_bus_write;
     bno055.bus_read = BNO055_uart_bus_read;
     bno055.delay_msec = BNO055_delay_msek;
-
-    stat = bno055_init(&bno055);    
-   
-    stat = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
-    if(stat == 0){
-        sleep(.02);
-    }else{
-        cout << "Failed to set BNO05 NDOF mode. " << endl;
-    }
-
+    stat = bno055_init(&bno055);   
     thread t1(imuPoller, this);  
     t1.detach();
     return nRet;
@@ -76,9 +74,8 @@ void Imu::stop(){
 }
 void Imu::imuPoller(Imu* pImu){
     BNO055_RETURN_FUNCTION_TYPE ret;
-    int result;
-
-    result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
+    
+    int result = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF); 
     this_thread::sleep_for(chrono::milliseconds(20));
     if(result != 0){
         cout << "Failed to set operation mode mode. IMU poller thread exiting." << endl;
@@ -94,10 +91,7 @@ void Imu::imuPoller(Imu* pImu){
         chrono::_V2::steady_clock::time_point timePt = 
             chrono::steady_clock::now() + chrono::milliseconds(SAMPLE_RATE_MS);  
         
-        mtxData.lock();
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
-        mtxData.unlock();
-        
         if(result ==0){
             dataPoint.roll = hrp.r;
             dataPoint.pitch = hrp.p;
@@ -106,55 +100,27 @@ void Imu::imuPoller(Imu* pImu){
             dataPoint.gyroY = gyro.y;
             dataPoint.accX = accel.x;
             dataPoint.accY = accel.y;
-
             pImu->add(dataPoint);    
-            pImu->updateHeadingSums(dataPoint);
-
         }
- 
         this_thread::sleep_until(timePt);
     }
 }
-void Imu::getLatestHrp(ImuData *pData){
+
+void Imu::getLatestData(ImuData *pData){
     ImuData latest = *(m_pData->begin());
     pData->heading=latest.heading;
     pData->roll=latest.roll;
     pData->pitch=latest.pitch;
-}
-void Imu::getLatestGyro(ImuData *pData){
-    ImuData latest = *(m_pData->begin());
     pData->gyroX=latest.gyroX;
     pData->gyroY=latest.gyroY;
-}
-void Imu::getLatestAccel(ImuData *pData){
-    ImuData latest = *(m_pData->begin());
     pData->accX=latest.accX;
     pData->accY=latest.accY;
 }
 
-int Imu::getAverageHeading(int nAverageIndex){
-    return getHeadingSum(nAverageIndex) / m_pData->size();
+int Imu::getAverageHeading(int index){
+    return m_headingSums[index].sum / m_headingSums[index].count;
 }
-long Imu::getHeadingSum(int index){
-    return m_nHeadingSums[index];
-}
+
 int Imu::getHeadingAverageSamples(int index){
-    return m_nHeadingSamples[index];
-}
-void Imu::updateHeadingSums(ImuData dataPoint){
-    memset(m_nHeadingSums, 0, 8 *sizeof(long));
-    int nTotalSamples = m_pData->size();
-    int nCount = 0;
-    for(int i = 0; i < 8; i++){
-        int nSamples = m_nHeadingSamples[i];
-        for(int j = 0; j < nSamples; j++){
-            mtxData.lock();
-            m_nHeadingSums[i] += dataPoint.heading;
-            mtxData.unlock();
-            nCount++;
-            if(nCount >= nTotalSamples) break;
-        }
-        if(nCount >= nTotalSamples) break;
-        if(i < 7) m_nHeadingSums[i + 1] =m_nHeadingSums[i];
-    }
+    return m_headingSums[index].count;
 }
