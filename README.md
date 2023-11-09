@@ -24,6 +24,9 @@ vm.dirty_ratio=50
 ## Dependencies
 BCM2835 libray
 http://www.airspayce.com/mikem/bcm2835/
+
+Display Driver
+https://github.com/gavinlyonsrepo/SSD1306_OLED_RPI.git
 ```
 sudo apt install build-essential
 sudo apt install gpiod libgpiod-dev
