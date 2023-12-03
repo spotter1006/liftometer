@@ -22,10 +22,20 @@ vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 ```
 ## Dependencies
+### build tools
 ```
 sudo apt install build-essential
+```
+### gpoid GPIO library
+```
 sudo apt install gpiod libgpiod-dev
-````
+```
+### u8g2 display library 
+Build from sources
+```
+https://github.com/antiprism/libu8g2arm
+```
+
 ## Monitoring & Debug Tools
 ```
 sudo apt install git

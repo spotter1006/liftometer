@@ -6,22 +6,20 @@
 			"label": "debug build",
 			"command": "/usr/bin/g++",
 			"args": [
-				// "-Wl,--verbose ",
-				// "-O0",			// Optimization level 0
-				// "-pg",			// gprof profiling data
-				// "-I${workspaceFolder}../",
 				"-pthread",
 				"-fdiagnostics-color=always",
 				"-g",
 				"${workspaceFolder}/*.c*",
 				"-o",
 				"${fileDirname}/build/debug/liftometer",
-				"-lgpiodcxx"		// This has to be after the object file creation step or symbols are not found
+				"-L/usr/local/lib",
+				"-l:libu8g2arm.a",	// Display library	(SPI)
+				"-lgpiodcxx"		// for GPIO access. This has to be after the object file creation step or symbols are not found
 			],
 			"options": {
 				"cwd": "${fileDirname}"
 			},
-			"problemMatcher": [
+			"problemMatcher": [s
 				"$gcc"
 			],
 			"group": {

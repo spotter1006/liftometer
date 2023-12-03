@@ -5,7 +5,7 @@
 #include <thread>
 #include "imu.hpp"
 
-#define UPDATE_INTERVAL_MS (10)
+#define UPDATE_INTERVAL_MS (500)
 #define PWM_FULL_COUNT (4095)       // Count regiters are 12 bits in PCA 9685
 #define PWM_FREQUENCY (333)         // 3 mS
 

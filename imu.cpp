@@ -31,15 +31,18 @@ void Imu::add(ImuData dataPoint){
         m_pData->resize(DATA_SIZE);
     }
     // Update sums
-    ImuData oldestData = *m_pData->end();
+    int index = 0;
     for(ImuData dataPoint : *m_pData){
-        for(int i = 0; i < 8; i++){
+        for(int i = 0; i < 8; i++){           
             m_headingSums[i].sum += dataPoint.heading;
-            if(m_headingSums[i].count >= m_headingSums[i].size)
-                m_headingSums[i].sum -= oldestData.heading;
+            if(m_headingSums[i].count >= m_headingSums[i].size){
+                if(index == m_headingSums[i].size-1)            // Oldest datapoint for this bucket
+                    m_headingSums[i].sum -= dataPoint.heading;
+            }
             else
                 m_headingSums[i].count++;         
         }
+        index++;
     }
 }
 int Imu::start(){
@@ -117,7 +120,8 @@ void Imu::getLatestData(ImuData *pData){
     pData->accY=latest.accY;
 }
 
-int Imu::getAverageHeading(int index){
+double Imu::getAverageHeading(int index){
+    if(m_headingSums[index].count == 0) return 0;
     return m_headingSums[index].sum / m_headingSums[index].count;
 }
 

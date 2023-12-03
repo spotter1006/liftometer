@@ -6,6 +6,9 @@
 #include "PCA9685.h"
 #include <cstring>
 #include <math.h>
+#include <libu8g2arm/U8g2lib.h>
+#include <libu8g2arm/u8g2arm.h>
+#include <cstdio>
 using namespace std;
 
 extern Encoder *pEncoder;
@@ -14,6 +17,7 @@ extern Imu* pImu;
 int nSampleSize;
 unsigned int nOnVals[16];
 unsigned int nOffVals[16];
+U8G2_SSD1309_128X64_NONAME2_F_4W_HW_SPI u8g2(U8G2_R0, 22, 27, 17); // Rotation, CS, DC, RST
 
 Display::Display(){
     nSampleSize = 100;
@@ -22,9 +26,19 @@ Display::Display(){
     //_PCA9685_DEBUG = 1; // uncomment to show PCA9685 debug info
     m_nFd = PCA9685_openI2C(1, 0x20);
     int nResult = PCA9685_initPWM(m_nFd, m_nSlaveAddr, PWM_FREQUENCY);
+
+    if (!u8g2arm_arm_init_hw_spi(u8g2.getU8x8(), 0, 0, 1)  ){ // u8g2 struct, [device name: /dev/spidev0.0], speed (Mhz)
+        fprintf(stderr, "could not initialise SPI device");
+    }
+
+    u8g2.begin();
+    u8g2.clearBuffer();                     // clear the internal memory
+    u8g2.sendBuffer();                      // transfer internal memory to the display
+    u8g2.setFont(u8g2_font_ncenB08_tr);     // choose a suitable font
 }
 Display::~Display(){
     PCA9685_setAllPWM(m_nFd, m_nSlaveAddr, _PCA9685_MINVAL, _PCA9685_MINVAL);
+
 }
 
 int Display::updater(Display* pDisplay){
@@ -33,7 +47,7 @@ int Display::updater(Display* pDisplay){
 
     int nResult = 0;
     chrono::steady_clock::time_point timePt;
-    ImuAveragedData average;
+
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         ImuData latest;
@@ -41,14 +55,14 @@ int Display::updater(Display* pDisplay){
        
         mtxData.lock();  
         pImu->getLatestData(&latest);
-        pImu->getAverageHeading(1);
+        
         mtxData.unlock();
         
         // 16 counts per degree from IMU
         imuAngleToPwm(latest.roll, &nOnVals[0], &nOffVals[0]);       
         imuAngleToPwm(latest.pitch, &nOnVals[1], &nOffVals[1]);      
         imuAngleToPwm(latest.heading, &nOnVals[2], &nOffVals[2]);    
-        imuAngleToPwm(average.heading, &nOnVals[3], &nOffVals[3]);    
+        // imuAngleToPwm(average.heading, &nOnVals[3], &nOffVals[3]);    
         
         /************* TODO:***************************
             - gyro.z for yaw rate (shows how the boat is sliding)
@@ -60,9 +74,13 @@ int Display::updater(Display* pDisplay){
         int nTotalMs = nSampleSize * (SAMPLE_RATE_MS); 
         int nMinutes = nTotalMs / 60000;
         int nSeconds = (nTotalMs / 1000) % 60;
-        printf("\033[A\33[2K\rAverage(%02d:%02d): Average Heading: %d, Heading: %d, roll: %d pitch: %d", 
-        nMinutes, nSeconds, nOffVals[3], nOffVals[2], nOffVals[0], nOffVals[1]);
-        fflush(stdout); 
+        u8g2.clearBuffer();                     // clear the internal memory
+        u8g2.sendBuffer();                      // transfer internal memory to the display
+        char printBuff[128];
+        sprintf(printBuff, "%02d:%02d : %3.1f", 
+            nMinutes, nSeconds, pImu->getAverageHeading(pEncoder->getCount()) / 16.0);
+        u8g2.drawStr(0, 10, printBuff);         // write to the internal memory
+        u8g2.sendBuffer();                      // transfer internal memory to the display
 
         this_thread::sleep_until(timePt);
     }
