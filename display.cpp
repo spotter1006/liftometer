@@ -12,7 +12,6 @@
 using namespace std;
 
 extern Encoder *pEncoder;
-extern timed_mutex mtxData;
 extern Imu* pImu;
 int nSampleSize;
 unsigned int nOnVals[16];
@@ -52,13 +51,9 @@ int Display::updater(Display* pDisplay){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         ImuData latest;
         nSampleSize = pImu->getHeadingAverageSamples(pEncoder->getCount());
-       
-        mtxData.lock();  
+      
         pImu->getLatestData(&latest);
         
-        mtxData.unlock();
-        
-        // 16 counts per degree from IMU
         imuAngleToPwm(latest.roll, &nOnVals[0], &nOffVals[0]);       
         imuAngleToPwm(latest.pitch, &nOnVals[1], &nOffVals[1]);      
         imuAngleToPwm(latest.heading, &nOnVals[2], &nOffVals[2]);    
@@ -74,13 +69,8 @@ int Display::updater(Display* pDisplay){
         int nTotalMs = nSampleSize * (SAMPLE_RATE_MS); 
         int nMinutes = nTotalMs / 60000;
         int nSeconds = (nTotalMs / 1000) % 60;
-        u8g2.clearBuffer();                     // clear the internal memory
-        u8g2.sendBuffer();                      // transfer internal memory to the display
-        char printBuff[128];
-        sprintf(printBuff, "%02d:%02d : %3.1f", 
-            nMinutes, nSeconds, pImu->getAverageHeading(pEncoder->getCount()) / 16.0);
-        u8g2.drawStr(0, 10, printBuff);         // write to the internal memory
-        u8g2.sendBuffer();                      // transfer internal memory to the display
+
+        pDisplay->printData(latest);
 
         this_thread::sleep_until(timePt);
     }
@@ -106,3 +96,29 @@ void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off, u
     *on = phase;            // Phase shift
     *off = PWM_MIN + phase + nPulseWidth - 1;
 } 
+
+void Display:: printData(ImuData imu){
+    char characterBuff[128];
+    u8g2.clearBuffer();                     
+    u8g2.sendBuffer();         
+
+    sprintf(characterBuff, "Accel: %d, %d", imu.accX, imu.accY);
+    u8g2.drawStr(0, 10, characterBuff);   
+    sprintf(characterBuff, "HRP: %d, %d, %d", imu.heading, imu.pitch, imu.roll);
+    u8g2.drawStr(0, 20, characterBuff); 
+    sprintf(characterBuff, "Gyro: %d, %d", imu.gyroX, imu.gyroY);  
+    u8g2.drawStr(0, 30, characterBuff); 
+    
+    sprintf(characterBuff, "Average Headings:");
+    u8g2.drawStr(0, 40, characterBuff); 
+
+    double av5, av640;
+    pImu->getAverageHeading(1, & av5);
+    pImu->getAverageHeading(7, & av640);
+    sprintf(characterBuff, "5s: %3.1f, 640s: %3.1f", av5, av640);
+    u8g2.drawStr(0, 50, characterBuff); 
+    
+    u8g2.sendBuffer(); 
+                 
+
+}

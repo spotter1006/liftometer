@@ -14,7 +14,7 @@ using namespace std;
 
 extern "C" struct bno055_t bno055;
 extern gpiod::chip chip;
-timed_mutex mtxData;
+
 
 Imu::Imu(int nBufferSize){
     m_bKeepRunning = true;
@@ -25,25 +25,30 @@ Imu::~Imu(){
     m_pData->clear();
     delete m_pData;
 }
+// Thread safe
 void Imu::add(ImuData dataPoint){
+    m_mtxData.lock();
     m_pData->push_front(dataPoint);
     if(m_pData->size() > DATA_SIZE){
         m_pData->resize(DATA_SIZE);
     }
-    // Update sums
-    int index = 0;
-    for(ImuData dataPoint : *m_pData){
-        for(int i = 0; i < 8; i++){           
-            m_headingSums[i].sum += dataPoint.heading;
-            if(m_headingSums[i].count >= m_headingSums[i].size){
-                if(index == m_headingSums[i].size-1)            // Oldest datapoint for this bucket
-                    m_headingSums[i].sum -= dataPoint.heading;
-            }
-            else
-                m_headingSums[i].count++;         
-        }
-        index++;
+    // Clear out sums
+    for(int i = 0; i < 8; i++){ 
+        m_headingSums[i].sum = 0;
+        m_headingSums[1].count=0;
     }
+    // Update sums
+    list<ImuData>::iterator current = m_pData->begin();
+    while(current != m_pData->end()){
+        for(int i = 0; i < 8; i++){           
+            if(m_headingSums[i].count < m_headingSums[i].size){                 
+                m_headingSums[i].sum += current->heading;   
+                m_headingSums[i].count++;   
+            }
+        }
+        current++;
+    }
+    m_mtxData.unlock();
 }
 int Imu::start(){
     extern int fd;
@@ -88,11 +93,7 @@ void Imu::imuPoller(Imu* pImu){
     bno055_euler_t hrp; // heading, roll, pitch
     bno055_linear_accel_t accel;    // Linear acceleration (gravity removed)
     ImuData dataPoint;
-    while(pImu->isKeepRunning()){   
-
-        // Calculate interval for the next wake up
-        chrono::_V2::steady_clock::time_point timePt = 
-            chrono::steady_clock::now() + chrono::milliseconds(SAMPLE_RATE_MS);  
+    while(pImu->isKeepRunning()){  
         
         result = BNO055_read_combined_data(&gyro, &hrp, &accel);
         if(result ==0){
@@ -105,24 +106,29 @@ void Imu::imuPoller(Imu* pImu){
             dataPoint.accY = accel.y;
             pImu->add(dataPoint);    
         }
-        this_thread::sleep_until(timePt);
+
+        this_thread::sleep_for(chrono::milliseconds(SAMPLE_RATE_MS));
     }
 }
 
 void Imu::getLatestData(ImuData *pData){
-    ImuData latest = *(m_pData->begin());
-    pData->heading=latest.heading;
-    pData->roll=latest.roll;
-    pData->pitch=latest.pitch;
-    pData->gyroX=latest.gyroX;
-    pData->gyroY=latest.gyroY;
-    pData->accX=latest.accX;
-    pData->accY=latest.accY;
+    m_mtxData.lock();
+    list<ImuData>::iterator latest = m_pData->begin();
+    pData->heading=latest->heading;
+    pData->roll=latest->roll;
+    pData->pitch=latest->pitch;
+    pData->gyroX=latest->gyroX;
+    pData->gyroY=latest->gyroY;
+    pData->accX=latest->accX;
+    pData->accY=latest->accY;
+    m_mtxData.unlock();
 }
-
-double Imu::getAverageHeading(int index){
-    if(m_headingSums[index].count == 0) return 0;
-    return m_headingSums[index].sum / m_headingSums[index].count;
+// Thread sasfe
+void Imu::getAverageHeading(int index, double* averageHeading){
+    // m_mtxData.lock();
+    if(m_headingSums[index].count == 0) return;
+    *averageHeading = m_headingSums[index].sum / m_headingSums[index].count;
+    // m_mtxData.unlock();
 }
 
 int Imu::getHeadingAverageSamples(int index){

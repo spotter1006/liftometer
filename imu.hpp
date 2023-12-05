@@ -15,6 +15,7 @@ typedef struct ACCUMULATOR{
     int size;
     int count;
     long sum;
+    short oldestHeading;
 }Accumulator;
 typedef struct IMU_DATA{
     short roll;
@@ -25,15 +26,7 @@ typedef struct IMU_DATA{
     short accX;
     short accY;
 }ImuData;
-typedef struct IMU_AVERAGED_DATA{
-    double roll;
-    double pitch;
-    double heading;
-    double gyroX;
-    double gyroY;
-    double accX;
-    double accY;
-}ImuAveragedData;
+
 class Imu{
     public:
         Imu(int);
@@ -44,10 +37,11 @@ class Imu{
         void stop();
         void getLatestData(ImuData *pData);
         int getHeadingAverageSamples(int index);
-        double getAverageHeading(int nAverageIndex);
+        void getAverageHeading(int index, double* averageHeading);
         inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
         inline void unlock(void){m_mtxData.unlock();}
         inline bool isKeepRunning(){return m_bKeepRunning;}
+        inline int getDataSize(){return m_pData->size();}
     private:        
         int m_nBufferSize;
         timed_mutex m_mtxData;

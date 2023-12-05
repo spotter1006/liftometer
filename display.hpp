@@ -30,6 +30,7 @@ class Display{
         ~Display();
         void start();
         void stop();
+        void printData(ImuData imu);
         int setPWMVals(unsigned int * nOnVals, unsigned int *nOffVals);
         inline bool isKeepRunning(){return m_bKeepRunning;}
     private:
