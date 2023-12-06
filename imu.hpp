@@ -41,8 +41,6 @@ class Imu{
         void getLatestData(ImuData *pData);
         int getHeadingAverageSamples(int i);
         int getAverageHeading(int i);
-        inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
-        inline void unlock(void){m_mtxData.unlock();}
         inline bool isKeepRunning(){return m_bKeepRunning;}
         inline int getDataSize(){return m_pData->size();}
     private:        
