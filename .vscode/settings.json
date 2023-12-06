@@ -70,7 +70,8 @@
     "stop_token": "cpp",
     "condition_variable": "cpp",
     "fstream": "cpp",
-    "ostream": "cpp"
+    "ostream": "cpp",
+    "atomic": "cpp"
   },
   "typescript.tsserver.maxTsServerMemory": 500
 }

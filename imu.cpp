@@ -20,6 +20,16 @@ Imu::Imu(int nBufferSize){
     m_bKeepRunning = true;
     m_nBufferSize =nBufferSize;
     m_pData = new list<ImuData>();
+
+    m_pAverages[0] = new Average( 5 * SAMPLES_PER_SECOND);
+    m_pAverages[1] = new Average( 10 * SAMPLES_PER_SECOND);
+    m_pAverages[2] = new Average( 20 * SAMPLES_PER_SECOND);
+    m_pAverages[3] = new Average( 40 * SAMPLES_PER_SECOND);
+    m_pAverages[4] = new Average( 80 * SAMPLES_PER_SECOND);
+    m_pAverages[5] = new Average( 160 * SAMPLES_PER_SECOND);
+    m_pAverages[6] = new Average( 320 * SAMPLES_PER_SECOND);
+    m_pAverages[7] = new Average( 640 * SAMPLES_PER_SECOND);
+
 }
 Imu::~Imu(){
     m_pData->clear();
@@ -32,23 +42,10 @@ void Imu::add(ImuData dataPoint){
     if(m_pData->size() > DATA_SIZE){
         m_pData->resize(DATA_SIZE);
     }
-    // Clear out sums
-    for(int i = 0; i < 8; i++){ 
-        m_headingSums[i].sum = 0;
-        m_headingSums[1].count=0;
-    }
-    // Update sums
-    list<ImuData>::iterator current = m_pData->begin();
-    while(current != m_pData->end()){
-        for(int i = 0; i < 8; i++){           
-            if(m_headingSums[i].count < m_headingSums[i].size){                 
-                m_headingSums[i].sum += current->heading;   
-                m_headingSums[i].count++;   
-            }
-        }
-        current++;
-    }
     m_mtxData.unlock();
+    for(int i = 0; i < BUCKETS; i++){
+        m_pAverages[i]->add(dataPoint.heading);
+    }
 }
 int Imu::start(){
     extern int fd;
@@ -123,14 +120,10 @@ void Imu::getLatestData(ImuData *pData){
     pData->accY=latest->accY;
     m_mtxData.unlock();
 }
-// Thread sasfe
-void Imu::getAverageHeading(int index, double* averageHeading){
-    // m_mtxData.lock();
-    if(m_headingSums[index].count == 0) return;
-    *averageHeading = m_headingSums[index].sum / m_headingSums[index].count;
-    // m_mtxData.unlock();
+int Imu::getAverageHeading(int i){
+    return m_pAverages[i]->getAverage();
 }
 
-int Imu::getHeadingAverageSamples(int index){
-    return m_headingSums[index].count;
+int Imu::getHeadingAverageSamples(int i){
+    return m_pAverages[i]->getCount();
 }
