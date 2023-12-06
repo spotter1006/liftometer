@@ -124,6 +124,3 @@ int Imu::getAverageHeading(int i){
     return m_pAverages[i]->getAverage();
 }
 
-int Imu::getHeadingAverageSamples(int i){
-    return m_pAverages[i]->getCount();
-}

@@ -39,7 +39,6 @@ class Imu{
         int start();
         void stop();
         void getLatestData(ImuData *pData);
-        int getHeadingAverageSamples(int i);
         int getAverageHeading(int i);
         inline bool isKeepRunning(){return m_bKeepRunning;}
         inline int getDataSize(){return m_pData->size();}

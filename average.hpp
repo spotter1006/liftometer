@@ -11,7 +11,6 @@ public:
     Average(int nSize);
     ~Average();
     inline int getAverage(){return m_pAverage->load();}
-    inline int getCount(){return m_pCount->load();}
     void add(short nPoint);
 private:
     atomic_int *m_pAverage;
