@@ -25,10 +25,10 @@ Imu::Imu(int nBufferSize){
     m_pAverages[1] = new Average( 10 * SAMPLES_PER_SECOND);
     m_pAverages[2] = new Average( 20 * SAMPLES_PER_SECOND);
     m_pAverages[3] = new Average( 40 * SAMPLES_PER_SECOND);
-    m_pAverages[4] = new Average( 80 * SAMPLES_PER_SECOND);
-    m_pAverages[5] = new Average( 160 * SAMPLES_PER_SECOND);
-    m_pAverages[6] = new Average( 320 * SAMPLES_PER_SECOND);
-    m_pAverages[7] = new Average( 640 * SAMPLES_PER_SECOND);
+    // m_pAverages[4] = new Average( 80 * SAMPLES_PER_SECOND);
+    // m_pAverages[5] = new Average( 160 * SAMPLES_PER_SECOND);
+    // m_pAverages[6] = new Average( 320 * SAMPLES_PER_SECOND);
+    // m_pAverages[7] = new Average( 640 * SAMPLES_PER_SECOND);
 
 }
 Imu::~Imu(){
@@ -122,5 +122,14 @@ void Imu::getLatestData(ImuData *pData){
 }
 int Imu::getAverageHeading(int i){
     return m_pAverages[i]->getAverage();
+}
+int Imu::getOldHeading(int samplesAgo){
+    ImuData result;
+    m_mtxData.lock();
+    list<ImuData>::iterator it = m_pData->begin();
+    advance(it, samplesAgo);
+    result = *it;
+    m_mtxData.unlock();
+    return result.heading;
 }
 

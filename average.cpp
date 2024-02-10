@@ -4,34 +4,34 @@ using namespace std;
 
 Average::Average(int nSize){
     m_nSize = nSize;
-    m_nMax = 4096;              // BNO055 12 bits
-    m_pAverage = new atomic_int(0);
-    m_pCount = new atomic_int(0);
 
-    m_dSmallConstant = 1.0 / m_nSize;
-    m_dLargeConstant = 1.0 - m_dSmallConstant;
+    m_pAverage = new atomic_int(0);
+    m_partialSum = 0;
+    m_pPoints = new list<short>();
 }
 Average::~Average(){
 
 }
-void Average::add(short nPoint){
-
-    double currentAverage = m_pAverage->load();    
-    double dSmall, dLarge;
-    double dRelativeChange = abs(nPoint - currentAverage);
-
-    if(dRelativeChange > RESET_THRESHOLD){           // Seed average if large change       
-        dLarge = 0.0;
-        dSmall = 1.0;
-    }else if(m_pCount->load() == m_nSize){
-        dSmall = m_dSmallConstant;
-        dLarge = m_dLargeConstant;
-    }else{                                                  // Bucket not yet filled, go with current count
-        dSmall = *m_pCount / m_nSize;
-        dLarge = 1.0 - dSmall;
-        m_pCount->fetch_add(1);
+void Average::add(int nPoint){   
+    m_pPoints->push_front(nPoint);
+    if(m_pPoints->size() > m_nSize)
+        m_pPoints->resize(m_nSize);
+    
+    // Force the upcast to double
+    double dAverage = 0;  
+    double dSize = (double) m_pPoints->size();
+    double dPoint = (double) nPoint;
+    
+    if(m_pPoints->size() < m_nSize){                 
+        m_partialSum += dPoint;
+        dAverage = m_partialSum / dSize;      
+    }else{   
+        double current =  m_pAverage->load();   
+        double oldest = m_pPoints->back();                            
+        dAverage =  current + ((dPoint - oldest) / dSize);
     }
-    int nResult = currentAverage * dLarge + nPoint * dSmall;
-    m_pAverage->exchange(nResult);
+    
+    m_pAverage->exchange((short) dAverage);
 }
+
 

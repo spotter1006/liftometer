@@ -93,28 +93,19 @@ void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off, u
 void Display:: printData(ImuData imu){
     char characterBuff[128];
     u8g2.clearBuffer();                     
-    u8g2.sendBuffer();         
+    u8g2.sendBuffer();     
 
-    sprintf(characterBuff, "Pitch: %d, Roll: %d", imu.pitch / 16, imu.roll / 16);
-    u8g2.drawStr(0, 10, characterBuff); 
-    
-    sprintf(characterBuff, "Heading: %d", imu.heading / 16);
+    sprintf(characterBuff, "Headings:");
     u8g2.drawStr(0, 20, characterBuff); 
-
-    sprintf(characterBuff, "%d,%d,%d,%d",
-    pImu->getAverageHeading(1)/16,
-    pImu->getAverageHeading(2)/16,
-    pImu->getAverageHeading(3)/16,
-    pImu->getAverageHeading(4)/16);
+    
+    sprintf(characterBuff, "%d %d %d %d %d",
+    imu.heading / 16,
+    pImu->getAverageHeading(0) / 16,
+    pImu->getAverageHeading(1) / 16,
+    pImu->getAverageHeading(2) / 16,
+    pImu->getAverageHeading(3) / 16);
     u8g2.drawStr(0, 30, characterBuff); 
 
-    sprintf(characterBuff, "%d,%d,%d",
-    pImu->getAverageHeading(5)/16,
-    pImu->getAverageHeading(6)/16,
-    pImu->getAverageHeading(7)/16);
-    u8g2.drawStr(0, 40, characterBuff); 
-    
     u8g2.sendBuffer(); 
                  
-
 }

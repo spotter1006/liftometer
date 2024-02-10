@@ -71,7 +71,8 @@
     "condition_variable": "cpp",
     "fstream": "cpp",
     "ostream": "cpp",
-    "atomic": "cpp"
+    "atomic": "cpp",
+    "list": "cpp"
   },
   "typescript.tsserver.maxTsServerMemory": 500
 }

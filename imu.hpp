@@ -11,7 +11,7 @@
 #define SAMPLE_RATE_MS (10)
 #define SAMPLES_PER_SECOND (1000 / SAMPLE_RATE_MS)
 #define DATA_SIZE 20000000
-#define BUCKETS (8)
+#define BUCKETS (4)
 
 using namespace std;
 typedef struct ACCUMULATOR{
@@ -20,6 +20,7 @@ typedef struct ACCUMULATOR{
     long sum;
     short oldestHeading;
 }Accumulator;
+
 typedef struct IMU_DATA{
     short roll;
     short pitch;
@@ -40,6 +41,7 @@ class Imu{
         void stop();
         void getLatestData(ImuData *pData);
         int getAverageHeading(int i);
+        int getOldHeading(int samplesAgo);
         inline bool isKeepRunning(){return m_bKeepRunning;}
         inline int getDataSize(){return m_pData->size();}
     private:        
