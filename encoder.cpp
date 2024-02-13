@@ -72,11 +72,19 @@ void Encoder::poller(Encoder* pEncoder){
     gpiod::line lineA = chip.get_line(ENCODER_LINE_A); 
     gpiod::line lineB = chip.get_line(ENCODER_LINE_B);
     gpiod::line lineSwitch = chip.get_line(SWITCH_LINE);
+
+
+
     lineA.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);  
     lineB.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
     
     // TODO: libgpiod V1.6 has the version that allows setting the pullup. The highest version available in buster is libgpio 1.2
-    // lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);   
+    // lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, gpiod::line_request::FLAG_BIAS_PULL_UP},0);  
+        gpiod::line_request lr;
+        lr.consumer="liftometer";
+        lr.request_type = gpiod::line_request::EVENT_BOTH_EDGES;
+        lr.flags |= 0x0100;           // Bit 4 is for FLAG_BIAS_PULL_UP
+
     lineSwitch.request({"liftometer", gpiod::line_request::EVENT_BOTH_EDGES, 0},0);
     
     gpiod::line_event event;

@@ -50,7 +50,6 @@ int Display::updater(Display* pDisplay){
     while(pDisplay->isKeepRunning()){
         timePt = chrono::steady_clock::now() + chrono::milliseconds(UPDATE_INTERVAL_MS);
         ImuData latest;
-        nSampleSize = pImu->getHeadingAverageSamples(pEncoder->getCount());
       
         pImu->getLatestData(&latest);
         
@@ -61,17 +60,11 @@ int Display::updater(Display* pDisplay){
         
         /************* TODO:***************************
             - gyro.z for yaw rate (shows how the boat is sliding)
-            - accel.x,y for performance indicator 
+            - accel.x,y for performance indicator (VMGs)
         *********************************************************/
 
         pDisplay->setPWMVals(nOnVals, nOffVals);
-
-        int nTotalMs = nSampleSize * (SAMPLE_RATE_MS); 
-        int nMinutes = nTotalMs / 60000;
-        int nSeconds = (nTotalMs / 1000) % 60;
-
         pDisplay->printData(latest);
-
         this_thread::sleep_until(timePt);
     }
     return nResult;
@@ -100,25 +93,19 @@ void Display::imuAngleToPwm(double angle, unsigned int *on, unsigned int *off, u
 void Display:: printData(ImuData imu){
     char characterBuff[128];
     u8g2.clearBuffer();                     
-    u8g2.sendBuffer();         
+    u8g2.sendBuffer();     
 
-    sprintf(characterBuff, "Accel: %d, %d", imu.accX, imu.accY);
-    u8g2.drawStr(0, 10, characterBuff);   
-    sprintf(characterBuff, "HRP: %d, %d, %d", imu.heading, imu.pitch, imu.roll);
+    sprintf(characterBuff, "Headings:");
     u8g2.drawStr(0, 20, characterBuff); 
-    sprintf(characterBuff, "Gyro: %d, %d", imu.gyroX, imu.gyroY);  
+    
+    sprintf(characterBuff, "%d %d %d %d %d",
+    imu.heading / 16,
+    pImu->getAverageHeading(0) / 16,
+    pImu->getAverageHeading(1) / 16,
+    pImu->getAverageHeading(2) / 16,
+    pImu->getAverageHeading(3) / 16);
     u8g2.drawStr(0, 30, characterBuff); 
-    
-    sprintf(characterBuff, "Average Headings:");
-    u8g2.drawStr(0, 40, characterBuff); 
 
-    double av5, av640;
-    pImu->getAverageHeading(1, & av5);
-    pImu->getAverageHeading(7, & av640);
-    sprintf(characterBuff, "5s: %3.1f, 640s: %3.1f", av5, av640);
-    u8g2.drawStr(0, 50, characterBuff); 
-    
     u8g2.sendBuffer(); 
                  
-
 }

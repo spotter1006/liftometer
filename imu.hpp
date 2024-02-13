@@ -6,10 +6,13 @@
 #include <thread>
 #include <mutex>
 #include <list>
+#include "average.hpp"
 
 #define SAMPLE_RATE_MS (10)
 #define SAMPLES_PER_SECOND (1000 / SAMPLE_RATE_MS)
 #define DATA_SIZE 20000000
+#define BUCKETS (4)
+
 using namespace std;
 typedef struct ACCUMULATOR{
     int size;
@@ -17,6 +20,7 @@ typedef struct ACCUMULATOR{
     long sum;
     short oldestHeading;
 }Accumulator;
+
 typedef struct IMU_DATA{
     short roll;
     short pitch;
@@ -36,10 +40,8 @@ class Imu{
         int start();
         void stop();
         void getLatestData(ImuData *pData);
-        int getHeadingAverageSamples(int index);
-        void getAverageHeading(int index, double* averageHeading);
-        inline void lock(chrono::_V2 ::steady_clock::time_point tmUntil){m_mtxData.try_lock_until(tmUntil);}
-        inline void unlock(void){m_mtxData.unlock();}
+        int getAverageHeading(int i);
+        int getOldHeading(int samplesAgo);
         inline bool isKeepRunning(){return m_bKeepRunning;}
         inline int getDataSize(){return m_pData->size();}
     private:        
@@ -47,15 +49,6 @@ class Imu{
         timed_mutex m_mtxData;
         bool m_bKeepRunning;
         list<ImuData> *m_pData;
-        Accumulator m_headingSums[8] = {
-                {5 * SAMPLES_PER_SECOND, 0, 0}, 
-                {10 * SAMPLES_PER_SECOND, 0, 0}, 
-                {20 * SAMPLES_PER_SECOND, 0, 0}, 
-                {40 * SAMPLES_PER_SECOND, 0, 0}, 
-                {80 * SAMPLES_PER_SECOND, 0, 0},
-                {160 * SAMPLES_PER_SECOND, 0, 0}, 
-                {320 * SAMPLES_PER_SECOND, 0, 0}, 
-                {640 * SAMPLES_PER_SECOND, 0, 0}    // 10 minutes, 40 seconds
-        };
+        Average *m_pAverages[BUCKETS];      
 };
 #endif
